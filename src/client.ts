@@ -1,4 +1,5 @@
 
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as cp from 'child_process';
@@ -112,11 +113,17 @@ export class Client {
 
 	private _started: Promise<void> | undefined;
 
+	private _extensionPath: string;
+
 	public get outputChannel(): vscode.OutputChannel {
 		if (!this._outputChannel) {
 			this._outputChannel = vscode.window.createOutputChannel("Snail");
 		}
 		return this._outputChannel;
+	}
+
+	constructor(extensionPath : string) {
+		this._extensionPath = extensionPath;
 	}
 
 	private async _handleError(error: Error, message: rpc.Message | undefined, count: number | undefined) {
@@ -129,26 +136,52 @@ export class Client {
 		this.start();
 	}
 
+	private _getServerExecutablePath() : string {
+		const executableConfig : string | undefined = vscode.workspace.getConfiguration("snail")?.get("server.executable");
+		if(executableConfig) {
+			return executableConfig;
+		}
+		let serverExecutableName = 'snail-server';
+		if(process.platform === 'win32') {
+			serverExecutableName += ".exe";
+		}
+		return path.resolve(this._extensionPath, 'server', 'bin', serverExecutableName);
+	}
+
+	private _getServerCwd() : string | undefined {
+		const folders = vscode.workspace.workspaceFolders;
+		if(!folders || folders.length === 0) {
+			return undefined;
+		}
+		const firstFolder = folders[0];
+		if(firstFolder.uri.scheme === 'file') {
+			return firstFolder.uri.fsPath;
+		}
+		return undefined;
+	}
+
 	private async _createConnection(): Promise<rpc.MessageConnection> {
 
-		// FIXME: do not use hard-coded paths
-		// const serverPath: string = String.raw`C:\Users\aziegenhagel\build\snail-server\debug\snail\server\snail-server.exe`;
-		const serverPath: string = String.raw`C:\Users\aziegenhagel\build\snail-server\release\snail\server\snail-server.exe`;
-		const serverArgs: string[] = [];
-		const serverExecOptions: cp.SpawnOptionsWithoutStdio = Object.create(null);
-		serverExecOptions.cwd = String.raw`C:\Users\aziegenhagel\temp`;
+		const serverPath = this._getServerExecutablePath();
 
+		const serverExecOptions: cp.SpawnOptionsWithoutStdio = Object.create(null);
+		serverExecOptions.cwd = this._getServerCwd();
+
+		const serverArgs: string[] = [];
 		let pipeName = rpc.generateRandomPipeName();
 		serverArgs.push("--pipe");
 		serverArgs.push(pipeName);
 
-		// serverArgs.push("--debug");
+		const debugServer = vscode.workspace.getConfiguration("snail")?.get("server.debug");
+		if(debugServer) {
+			serverArgs.push("--debug");
+		}
 
 		const pipeTransport = await rpc.createClientPipeTransport(pipeName);
 		
 		const serverProcess = cp.spawn(serverPath, serverArgs, serverExecOptions);
 		if (!serverProcess || !serverProcess.pid) {
-			return Promise.reject<rpc.MessageConnection>("Could not start server");
+			return Promise.reject<rpc.MessageConnection>(`Could not start server: '${serverPath}'`);
 		}
 		serverProcess.stderr.on('data', data => this.outputChannel.append(typeof data === 'string' || data instanceof String ? data : data.toString('utf-8')));
 		serverProcess.stdout.on('data', data => this.outputChannel.append(typeof data === 'string' || data instanceof String ? data : data.toString('utf-8')));
