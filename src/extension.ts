@@ -14,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	initDecorations();
 
-	client = new Client();
+	client = new Client(context.extensionPath);
 	client.start();
 }
 
