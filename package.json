@@ -24,6 +24,23 @@
           }
         ]
       }
+    ],
+    "configuration":[
+      {
+        "title": "Snail",
+        "properties": {
+          "snail.server.executable": {
+            "type": ["string", "null"],
+            "default": null,
+            "description": "Path to the snail server executable. If unset, the executable packaged with the extension will be used."
+          },
+          "snail.server.debug": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to start the server in debug mode. In this mode the server will wait for a debugger to attach right after start and will not do anything until then."
+          }
+        }
+      }
     ]
   },
   "main": "./out/extension.js",
