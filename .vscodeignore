@@ -1,10 +1,34 @@
+# Ignore extension configs
 .vscode/**
+
+# Ignore test files
 .vscode-test/**
+out/**
+
+# Ignore source code
 src/**
-.gitignore
+
+# Ignore node modules
+node_modules/**
+
+# Ignore web-view
+webview-ui/src/**
+webview-ui/public/**
+webview-ui/scripts/**
+webview-ui/index.html
+webview-ui/package.json
+webview-ui/package-lock.json
+webview-ui/node_modules/**
+
+# Ignore Misc
 .yarnrc
 vsc-extension-quickstart.md
+**/.gitignore
 **/tsconfig.json
+**/tsconfig.node.json
+**/vite.config.ts
+**/webpack.config.js
+**/svelte.config.js
 **/.eslintrc.json
 **/*.map
 **/*.ts
