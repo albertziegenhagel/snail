@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install Dependencies
+        run: npm run install:all
+
+      - name: Compile Webview
+        run: npm run build:webview
+
+      - name: Compile Extension
+        run: npm run compile
+
+      - name: Run Linter
+        run: npm run lint
+
+      - name: Compile Test Sources
+        run: npm run pretest
+
+      - name: Run unit tests
+        run: xvfb-run -a npm run test
+        if: runner.os == 'Linux'
+
+      - name: Run unit tests
+        run: npm run test
+        if: runner.os != 'Linux'

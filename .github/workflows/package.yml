@@ -1,0 +1,66 @@
+name: Package
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  package:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x86_64
+            target: win32-x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+            target: linux-x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install VSCE
+        run: npm install -g @vscode/vsce
+
+      - name: Install Dependencies
+        run: npm run install:all
+
+      - name: Compile Webview
+        run: npm run build:webview
+
+      - name: Compile Extension
+        run: npm run compile
+
+      - name: Download server executable
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{secrets.SNAIL_TOKEN}}
+          workflow: build.yml
+          workflow_conclusion: success
+          branch: main
+          name: snail-server-${{ matrix.arch }}-${{ matrix.platform }}
+          path: server/bin
+          repo: albertziegenhagel/snail-server
+          check_artifacts:  true
+          search_artifacts: true
+
+      - name: Package
+        run: vsce package --target ${{ matrix.target }}
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v3
+        with: 
+          name: snail-${{ matrix.target }}
+          path: ${{ github.workspace }}/*.vsix
