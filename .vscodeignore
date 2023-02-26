@@ -19,6 +19,8 @@ webview-ui/index.html
 webview-ui/package.json
 webview-ui/package-lock.json
 webview-ui/node_modules/**
+!webview-ui/node_modules/@vscode/codicons/dist/codicon.css
+!webview-ui/node_modules/@vscode/codicons/dist/codicon.ttf
 
 # Ignore Misc
 .yarnrc
