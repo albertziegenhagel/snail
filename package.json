@@ -28,6 +28,9 @@
             "filenamePattern": "*.etl"
           },
           {
+            "filenamePattern": "*.diagsession"
+          },
+          {
             "filenamePattern": "*perf.data"
           }
         ]
