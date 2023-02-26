@@ -105,6 +105,13 @@ export interface FunctionFileHits {
 	line_hits: LineHits[];
 }
 
+enum ClientState {
+	starting,
+	running,
+	stopping,
+	stopped,
+}
+
 export class Client {
 
 	private _connection: rpc.MessageConnection | undefined;
@@ -115,6 +122,8 @@ export class Client {
 
 	private _extensionPath: string;
 
+	private _clientState: ClientState;
+
 	public get outputChannel(): vscode.OutputChannel {
 		if (!this._outputChannel) {
 			this._outputChannel = vscode.window.createOutputChannel("Snail");
@@ -124,6 +133,7 @@ export class Client {
 
 	constructor(extensionPath : string) {
 		this._extensionPath = extensionPath;
+		this._clientState = ClientState.stopped;
 	}
 
 	private async _handleError(error: Error, message: rpc.Message | undefined, count: number | undefined) {
@@ -131,9 +141,11 @@ export class Client {
 	}
 	
 	private async _handleClosed() {
-		vscode.window.showErrorMessage("Snail server closed connection unexpectedly. Restarting...");
-		this._connection?.end();
-		this.start();
+		if(this._clientState === ClientState.running) {
+			vscode.window.showErrorMessage("Snail server closed connection unexpectedly. Restarting...");
+			this._connection?.end();
+			this.start();
+		}
 	}
 
 	private _getServerExecutablePath() : string {
@@ -198,6 +210,8 @@ export class Client {
 
 	private async _start(): Promise<void> {
 
+		this._clientState = ClientState.starting;
+
 		this._connection =  await this._createConnection();
 
 		this._connection.listen();
@@ -211,6 +225,8 @@ export class Client {
 		};
 
 		const initializeResult = this._connection.sendRequest(initializeRequestType, initializeParams);
+
+		this._clientState = ClientState.running;
 	}
 
 	public async start(): Promise<void> {
@@ -221,14 +237,18 @@ export class Client {
 	public async stop(): Promise<void> {
 		await this._started;
 		if (this._connection === undefined) {
-			return;
+			return Promise.reject<void>("Client is not connected");
 		}
+
+		this._clientState = ClientState.stopping;
 
 		this._connection.sendRequest(shutdownRequestType, undefined);
 		await this._connection.sendNotification(exitNotificationType);
 
 		this._connection.end();
 		this._connection.dispose();
+		
+		this._clientState = ClientState.stopped;
 	}
 
 	public async readDocument(filePath: string): Promise<number> {
