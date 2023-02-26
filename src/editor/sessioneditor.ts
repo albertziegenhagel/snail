@@ -78,11 +78,9 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
         const stylesUri = getUri(webview, this.extensionUri, ["webview-ui", "build", "assets", "index.css"]);
         const scriptUri = getUri(webview, this.extensionUri, ["webview-ui", "build", "assets", "index.js"]);
 
-        const codiconsUri = getUri(webview, this.extensionUri, ["webview-ui", "node_modules", "@vscode/codicons", "dist", "codicon.css"]);
+        const codiconsUri = getUri(webview, this.extensionUri, ["webview-ui", "node_modules", "@vscode", "codicons", "dist", "codicon.css"]);
 
         const nonce = getNonce();
-
-        // <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 
         return /* html */`
             <!DOCTYPE html>
@@ -95,6 +93,9 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                     <title>Performance Session</title>
                     <meta charset="UTF-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+                    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+
                     <link rel="stylesheet" type="text/css" href="${stylesUri}"/>
                     <link rel="stylesheet" type="text/css" href="${codiconsUri}"/>
                 </head>
