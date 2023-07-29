@@ -48,7 +48,6 @@
     }
 
     .twistie {
-        display: block;
         padding-right: 6px;
     }
     .twistie:before {
