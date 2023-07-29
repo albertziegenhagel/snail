@@ -14,7 +14,7 @@
   //   if(processes !== null) {
   //     for (const process of processes) {
   //       if(process.id in roots) continue;
-  //       vscode.postMessage({ command: "retrieve_call_tree_hot_path", processId: process.id });
+  //       vscode.postMessage({ command: "retrieveCallTreeHotPath", processId: process.id });
   //     }
   //     // TODO: remove old roots
   //   }
@@ -24,8 +24,8 @@
   // }
 
   // window.addEventListener("message", (event) => {
-  //   if(event.data.type !== "call_tree_hot_path") return;
-  //   roots[event.data.data['process_id']] = event.data.data['root'];
+  //   if(event.data.type !== "callTreeHotPath") return;
+  //   roots[event.data.data['processId']] = event.data.data['root'];
   // });
 </script>
 

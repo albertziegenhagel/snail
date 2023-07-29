@@ -39,7 +39,7 @@
             <slot name="total-samples-prefix" />
             {#if func !== null}
                 <span class="total-samples-text"
-                    >{func.total_samples} ({func.total_percent.toFixed(
+                    >{func.totalSamples} ({func.totalPercent.toFixed(
                         2
                     )}%)</span
                 >
@@ -53,7 +53,7 @@
             <slot name="self-samples-prefix" />
             {#if func !== null}
                 <span class="self-samples-text"
-                    >{func.self_samples} ({func.self_percent.toFixed(2)}%)</span
+                    >{func.selfSamples} ({func.selfPercent.toFixed(2)}%)</span
                 >
             {:else}
                 <Placeholder />

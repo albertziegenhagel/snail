@@ -9,15 +9,15 @@ export interface TimeSpan {
 export interface ThreadInfo {
     id: number;
     name: string;
-    start_time: number;
-    end_time: number;
+    startTime: number;
+    endTime: number;
 }
 
 export interface ProcessInfo {
     id: number;
     name: string;
-    start_time: number;
-    end_time: number;
+    startTime: number;
+    endTime: number;
     threads: ThreadInfo[];
 }
 
@@ -26,39 +26,39 @@ export interface FunctionNode {
     name: string;
     module: string;
     type: string;
-    total_samples: number;
-    self_samples: number;
-    total_percent: number;
-    self_percent: number;
+    totalSamples: number;
+    selfSamples: number;
+    totalPercent: number;
+    selfPercent: number;
 };
 
 export interface CallTreeNode {
     name: string;
     id: number;
-    function_id: number;
+    functionId: number;
     module: string;
-    total_samples: number;
-    self_samples: number;
-    total_percent: number;
-    self_percent: number;
+    totalSamples: number;
+    selfSamples: number;
+    totalPercent: number;
+    selfPercent: number;
     type: string;
     children: CallTreeNode[];
-    is_hot: boolean;
+    isHot: boolean;
 };
 
 export interface CallerCalleeNode {
-    process_id : number;
+    processId : number;
     function : FunctionNode;
     callers : FunctionNode[];
     callees : FunctionNode[];
 };
 
 export interface FunctionId {
-    process_id : number;
-    function_id : number;
+    processId : number;
+    functionId : number;
 };
 
 export interface ProcessFunction {
-    process_id : number;
+    processId : number;
     function : FunctionNode;
 };
