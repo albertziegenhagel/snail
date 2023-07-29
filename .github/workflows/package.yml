@@ -16,10 +16,12 @@ jobs:
             platform: windows
             arch: x86_64
             target: win32-x64
+            ext: zip
           - os: ubuntu-latest
             platform: linux
             arch: x86_64
             target: linux-x64
+            ext: tar.gz
 
     runs-on: ${{ matrix.os }}
 
@@ -44,20 +46,18 @@ jobs:
         run: npm run compile
 
       - name: Download server executable
-        uses: dawidd6/action-download-artifact@v2
+        uses: robinraju/release-downloader@v1.8
         with:
-          github_token: ${{secrets.SNAIL_TOKEN}}
-          workflow: build.yml
-          workflow_conclusion: success
-          branch: main
-          name: snail-server-${{ matrix.arch }}-${{ matrix.platform }}
-          path: server/bin
-          repo: albertziegenhagel/snail-server
-          check_artifacts:  true
-          search_artifacts: true
+          repository: albertziegenhagel/snail-server
+          tag: head
+          fileName: snail-server-${{ matrix.arch }}-${{ matrix.platform }}.${{ matrix.ext }}
+          out-file-path: server
+          extract: true
 
       - name: Package
-        run: vsce package --target ${{ matrix.target }}
+        run: |
+          rm server/snail-server-${{ matrix.arch }}-${{ matrix.platform }}.${{ matrix.ext }}
+          vsce package --target ${{ matrix.target }}
 
       - name: Upload binaries
         uses: actions/upload-artifact@v3
