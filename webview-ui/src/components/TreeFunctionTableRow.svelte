@@ -18,20 +18,20 @@
 
     $: if (node !== null && node.children !== null) {
         node.children.sort((a, b) => {
-            return -(a.total_samples - b.total_samples);
+            return -(a.totalSamples - b.totalSamples);
         });
     }
 
-    $: isHot = node !== null && node.is_hot;
-    $: isActive = node !== null && activeFunction != null && processId == activeFunction.process_id && node.function_id == activeFunction.function_id;
+    $: isHot = node !== null && node.isHot;
+    $: isActive = node !== null && activeFunction != null && processId == activeFunction.processId && node.functionId == activeFunction.functionId;
 
     let expanded: boolean =
-        node !== null && node.children !== null && node.is_hot;
+        node !== null && node.children !== null && node.isHot;
     const toggleExpansion = () => {
         expanded = !expanded;
         if (expanded && node.children === null) {
             vscode.postMessage({
-                command: "expand_call_tree_node",
+                command: "expandCallTreeNode",
                 processId: processId,
                 nodeId: node.id,
             });
@@ -41,8 +41,8 @@
     function navigateToSelf() {
         dispatch("navigate", {
             functionId: {
-                process_id: processId,
-                function_id: node.function_id,
+                processId: processId,
+                functionId: node.functionId,
             },
         });
     }
@@ -55,10 +55,10 @@
 
     window.addEventListener("message", (event) => {
         if (node === null) return;
-        if (event.data.type !== "call_tree_node_children") return;
+        if (event.data.type !== "callTreeNodeChildren") return;
         if (event.data.data["id"] !== node.id) return;
         event.data.data["children"].sort((a, b) => {
-            return -(a.total_samples - b.total_samples);
+            return -(a.totalSamples - b.totalSamples);
         });
         node.children = event.data.data["children"];
     });

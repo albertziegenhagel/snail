@@ -44,45 +44,45 @@
   let hotFunctions: ProcessFunction[] = null;
 
   onMount(() => {
-    vscode.postMessage({ command: "retrieve_session_info" });
-    vscode.postMessage({ command: "retrieve_system_info" });
-    vscode.postMessage({ command: "retrieve_processes" });
-    vscode.postMessage({ command: "retrieve_hottest_functions" });
+    vscode.postMessage({ command: "retrieveSessionInfo" });
+    vscode.postMessage({ command: "retrieveSystemInfo" });
+    vscode.postMessage({ command: "retrieveProcesses" });
+    vscode.postMessage({ command: "retrieveHottestFunctions" });
   });
 
   function changeActiveFunction(functionId: FunctionId, navigate = true) {
     activeFunction = functionId;
     vscode.postMessage({
-      command: "retrieve_callers_callees",
-      processId: activeFunction.process_id,
-      functionId: activeFunction.function_id,
+      command: "retrieveCallersCallees",
+      processId: activeFunction.processId,
+      functionId: activeFunction.functionId,
     });
     if(navigate) {
       vscode.postMessage({
-        command: "navigate_to_function",
-        processId: activeFunction.process_id,
-        functionId: activeFunction.function_id,
+        command: "navigateToFunction",
+        processId: activeFunction.processId,
+        functionId: activeFunction.functionId,
       });
     }
   }
 
   window.addEventListener("message", (event) => {
-    if (event.data.type === "session_info") {
-      const info = event.data.data["session_info"];
+    if (event.data.type === "sessionInfo") {
+      const info = event.data.data;
       const date = new Date(Date.parse(info.date));
       sessionInfo = [
-        { key: "Command", value: info.command_line },
+        { key: "Command", value: info.commandLine },
         { key: "Date", value: date.toLocaleString() },
         {
           key: "Runtime",
           value: `${(info.runtime / 1e9).toFixed(4)} seconds`,
         },
-        { key: "Processes", value: info.number_of_processes },
-        { key: "Threads", value: info.number_of_threads },
-        { key: "Total Samples", value: info.number_of_samples },
+        { key: "Processes", value: info.numberOfProcesses },
+        { key: "Threads", value: info.numberOfThreads },
+        { key: "Total Samples", value: info.numberOfSamples },
         {
           key: "Average Sample Rate",
-          value: `${info.average_sampling_rate.toFixed(4)} samples/s`,
+          value: `${info.averageSamplingRate.toFixed(4)} samples/s`,
         },
       ];
       totalTime = {
@@ -90,14 +90,14 @@
         end: info.runtime,
       };
     }
-    if (event.data.type === "system_info") {
-      const info = event.data.data["system_info"];
+    if (event.data.type === "systemInfo") {
+      const info = event.data.data;
       systemInfo = [
         { key: "Hostname", value: info.hostname },
         { key: "Platform", value: info.platform },
         { key: "Architecture", value: info.architecture },
-        { key: "CPU", value: info.cpu_name },
-        { key: "Processors", value: info.number_of_processors },
+        { key: "CPU", value: info.cpuName },
+        { key: "Processors", value: info.numberOfProcessors },
       ];
     }
     if (event.data.type === "processes") {
@@ -105,7 +105,7 @@
       for (const process of processes) {
         if (callTreeRoots === null || !(process.id in callTreeRoots)) {
           vscode.postMessage({
-            command: "retrieve_call_tree_hot_path",
+            command: "retrieveCallTreeHotPath",
             processId: process.id,
           });
           if (callTreeRoots === null) {
@@ -131,29 +131,29 @@
       callTreeRoots = callTreeRoots;
     }
 
-    if (event.data.type === "callers_callees") {
-      if (event.data.data["process_id"] !== activeFunction?.process_id) return;
-      if (event.data.data["function"]["id"] !== activeFunction?.function_id)
+    if (event.data.type === "callersCallees") {
+      if (event.data.data["processId"] !== activeFunction?.processId) return;
+      if (event.data.data["function"]["id"] !== activeFunction?.functionId)
         return;
       activeCallerCalleeNode = {
-        process_id: activeFunction.process_id,
+        processId: activeFunction.processId,
         function: event.data.data["function"],
         callers: event.data.data["callers"],
         callees: event.data.data["callees"],
       };
     }
 
-    if (event.data.type === "call_tree_hot_path") {
-      callTreeRoots.set(event.data.data["process_id"], event.data.data["root"]);
+    if (event.data.type === "callTreeHotPath") {
+      callTreeRoots.set(event.data.data["processId"], event.data.data["root"]);
       callTreeRoots = callTreeRoots;
     }
 
-    if (event.data.type === "hottest_functions") {
+    if (event.data.type === "hottestFunctions") {
       hotFunctions = event.data.data["functions"];
       if (activeFunction == null && hotFunctions.length > 0) {
         changeActiveFunction({
-          process_id: hotFunctions[0].process_id,
-          function_id: hotFunctions[0].function.id,
+          processId: hotFunctions[0].processId,
+          functionId: hotFunctions[0].function.id,
         }, false);
       }
     }

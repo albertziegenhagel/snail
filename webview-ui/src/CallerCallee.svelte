@@ -12,30 +12,30 @@
   // let callers: Function[] = [];
   // let callees: Function[] = [];
 
-  // $: if (activeFunction !== null && activeFunction.process_id !== null && activeFunction.function_id !== null) {
+  // $: if (activeFunction !== null && activeFunction.processId !== null && activeFunction.functionId !== null) {
   //   vscode.postMessage({
-  //     command: "retrieve_callers_callees",
-  //     processId: activeFunction.process_id,
-  //     functionId: activeFunction.function_id,
+  //     command: "retrieveCallersCallees",
+  //     processId: activeFunction.processId,
+  //     functionId: activeFunction.functionId,
   //   });
   // }
 
   function navigateTo(func: FunctionNode) {
     dispatch("navigate", {
       functionId: {
-        process_id: node.process_id,
-        function_id: func.id,
+        processId: node.processId,
+        functionId: func.id,
       },
     });
     // currentFunctionId = func.id;
   }
 
   // window.addEventListener("message", (event) => {
-  //   // if (currentFunctionId === null && event.data.type === "functions_page" && event.data.data["page_index"] === 0) {
+  //   // if (currentFunctionId === null && event.data.type === "functionsPage" && event.data.data["pageIndex"] === 0) {
   //   //   currentFunctionId = event.data.data["functions"][0].id;
   //   // }
-  //   if (event.data.type === "callers_callees") {
-  //     if(event.data.data["function"]['id'] !== activeFunction?.function_id) return;
+  //   if (event.data.type === "callersCallees") {
+  //     if(event.data.data["function"]['id'] !== activeFunction?.functionId) return;
   //     currentFunction = event.data.data["function"];
   //     callers = event.data.data["callers"];
   //     callees = event.data.data["callees"];
@@ -78,16 +78,16 @@
                 navigateTo(func);
               }}
               class="caller-callee-node-group-entry callee"
-              style="flex: {func.total_samples} 0 0;"
+              style="flex: {func.totalSamples} 0 0;"
             >
               <span class="function-name" title={func.name}>{func.name}</span>
-              <span class="samples" title="{func.total_samples} total samples"
-                >{func.total_samples}</span
+              <span class="samples" title="{func.totalSamples} total samples"
+                >{func.totalSamples}</span
               >
               <span
                 class="percent"
-                title="{func.total_percent.toFixed(2)}% of total samples"
-                >({func.total_percent.toFixed(2)}%)</span
+                title="{func.totalPercent.toFixed(2)}% of total samples"
+                >({func.totalPercent.toFixed(2)}%)</span
               >
             </div>
           {/each}
@@ -108,37 +108,37 @@
       {#if node !== null}
         <div
           class="caller-callee-node-group-entry current-total"
-          style="flex: {node.function.total_samples -
-            node.function.self_samples} 0 0;"
+          style="flex: {node.function.totalSamples -
+            node.function.selfSamples} 0 0;"
         >
           <span class="function-name" title={node.function.name}
             >{node.function.name}</span
           >
           <span
             class="samples"
-            title="{node.function.total_samples} total samples"
-            >{node.function.total_samples}</span
+            title="{node.function.totalSamples} total samples"
+            >{node.function.totalSamples}</span
           >
           <span
             class="percent"
-            title="{node.function.total_percent.toFixed(2)}% of total samples"
-            >({node.function.total_percent.toFixed(2)}%)</span
+            title="{node.function.totalPercent.toFixed(2)}% of total samples"
+            >({node.function.totalPercent.toFixed(2)}%)</span
           >
         </div>
         <div
           class="caller-callee-node-group-entry current-self"
-          style="flex: {node.function.self_samples} 0 0;"
+          style="flex: {node.function.selfSamples} 0 0;"
         >
           <span class="function-name">Function Body</span>
           <span
             class="samples"
-            title="{node.function.self_samples} self samples"
-            >{node.function.self_samples}</span
+            title="{node.function.selfSamples} self samples"
+            >{node.function.selfSamples}</span
           >
           <span
             class="percent"
-            title="{node.function.self_percent.toFixed(2)}% of total samples"
-            >({node.function.self_percent.toFixed(2)}%)</span
+            title="{node.function.selfPercent.toFixed(2)}% of total samples"
+            >({node.function.selfPercent.toFixed(2)}%)</span
           >
         </div>
       {:else}
@@ -172,16 +172,16 @@
                 navigateTo(func);
               }}
               class="caller-callee-node-group-entry caller"
-              style="flex: {func.total_samples} 0 0;"
+              style="flex: {func.totalSamples} 0 0;"
             >
               <span class="function-name" title={func.name}>{func.name}</span>
-              <span class="samples" title="{func.total_samples} total samples"
-                >{func.total_samples}</span
+              <span class="samples" title="{func.totalSamples} total samples"
+                >{func.totalSamples}</span
               >
               <span
                 class="percent"
-                title="{func.total_percent.toFixed(2)}% of total samples"
-                >({func.total_percent.toFixed(2)}%)</span
+                title="{func.totalPercent.toFixed(2)}% of total samples"
+                >({func.totalPercent.toFixed(2)}%)</span
               >
             </div>
           {/each}

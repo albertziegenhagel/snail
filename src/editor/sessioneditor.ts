@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getNonce } from '../utilities/getNonce';
 import { getUri } from '../utilities/getUri';
 import { client } from '../extension';
-import { FunctionFileHits } from '../client';
+import * as protocol from '../protocol';
 import { gutterDecorationType, hitDecorationTypes } from './decorations';
 
 class PerformanceSessionDocument implements vscode.CustomDocument {
@@ -109,7 +109,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
         webview.onDidReceiveMessage(
             (message: any) => {
                 switch (message.command) {
-                    case "retrieve_processes":
+                    case "retrieveProcesses":
                         client.retrieveProcesses(document.documentId).then(
                             (processInfos) => {
                                 webview.postMessage({
@@ -121,11 +121,11 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to retrieve processes: ${reason}`);
                             });
                         return;
-                    case "retrieve_hottest_functions":
+                    case "retrieveHottestFunctions":
                         client.retrieveHottestFunctions(document.documentId).then(
                             (functions) => {
                                 webview.postMessage({
-                                    "type": "hottest_functions",
+                                    "type": "hottestFunctions",
                                     "data": {
                                         "functions": functions,
                                     }
@@ -135,13 +135,13 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to retrieve hottest functions: ${reason}`);
                             });
                         return;
-                    case "retrieve_call_tree_hot_path":
+                    case "retrieveCallTreeHotPath":
                         client.retrieveCallTreeHotPath(document.documentId, message.processId).then(
                             (root) => {
                                 webview.postMessage({
-                                    "type": "call_tree_hot_path",
+                                    "type": "callTreeHotPath",
                                     "data": {
-                                        "process_id": message.processId,
+                                        "processId": message.processId,
                                         "root": root
                                     }
                                 });
@@ -150,14 +150,14 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to retrieve call tree hot path: ${reason}`);
                             });
                         return;
-                    case "retrieve_functions_page":
+                    case "retrieveFunctionsPage":
                         client.retrieveFunctionsPage(document.documentId, message.processId, message.pageSize, message.pageIndex).then(
                             (functions) => {
                                 webview.postMessage({
-                                    "type": "functions_page",
+                                    "type": "functionsPage",
                                     "data": {
-                                        "page_size": message.pageSize,
-                                        "page_index": message.pageIndex,
+                                        "pageSize": message.pageSize,
+                                        "pageIndex": message.pageIndex,
                                         "functions": functions,
                                     }
                                 });
@@ -166,11 +166,11 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to retrieve functions page: ${reason}`);
                             });
                         return;
-                    case "expand_call_tree_node":
+                    case "expandCallTreeNode":
                         client.expandCallTreeNode(document.documentId, message.processId, message.nodeId).then(
                             (children) => {
                                 webview.postMessage({
-                                    "type": "call_tree_node_children",
+                                    "type": "callTreeNodeChildren",
                                     "data": {
                                         "id": message.nodeId,
                                         "children": children
@@ -181,13 +181,13 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to expand call tree node: ${reason}`);
                             });
                         return;
-                    case "retrieve_callers_callees":
+                    case "retrieveCallersCallees":
                         client.retrieveCallersCallees(document.documentId, message.processId, message.functionId).then(
                             (result) => {
                                 webview.postMessage({
-                                    "type": "callers_callees",
+                                    "type": "callersCallees",
                                     "data": {
-                                        "process_id": message.processId,
+                                        "processId": message.processId,
                                         "function": result.function,
                                         "callers": result.callers,
                                         "callees": result.callees
@@ -198,11 +198,11 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to retrieve callers/callees: ${reason}`);
                             });
                         return;
-                    case "retrieve_session_info":
+                    case "retrieveSessionInfo":
                         client.retrieveSessionInfo(document.documentId).then(
                             (sessionInfo) => {
                                 webview.postMessage({
-                                    "type": "session_info",
+                                    "type": "sessionInfo",
                                     "data": sessionInfo
                                 });
                             },
@@ -210,11 +210,11 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to retrieve session info: ${reason}`);
                             });
                         return;
-                    case "retrieve_system_info":
+                    case "retrieveSystemInfo":
                         client.retrieveSystemInfo(document.documentId).then(
                             (systemInfo) => {
                                 webview.postMessage({
-                                    "type": "system_info",
+                                    "type": "systemInfo",
                                     "data": systemInfo
                                 });
                             },
@@ -223,7 +223,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             }
                         );
                         return;
-                    case "navigate_to_function":
+                    case "retrieveLineInfo":
                         client.retrieveLineInfo(document.documentId, message.processId, message.functionId).then(
                             (result) => {
                                 if (result === undefined) {
@@ -256,18 +256,18 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
         this.currentlyDecoratedEditor = undefined;
     }
 
-    async navigateTo(functionHits: FunctionFileHits) {
-        if (functionHits.file_path === null) {
+    async navigateTo(functionHits: protocol.RetrieveLineInfoResult|null) {
+        if (functionHits === null) {
             this.clearDecorations();
             return;
         }
 
-		// FIXME: Remove hard-coded mapping!
-        if (functionHits.file_path.startsWith("/mnt/c/")) {
-            functionHits.file_path = functionHits.file_path.replace("/mnt/c/", "C:/");
+        // FIXME: Remove hard-coded mapping!
+        if (functionHits.filePath.startsWith("/mnt/c/")) {
+            functionHits.filePath = functionHits.filePath.replace("/mnt/c/", "C:/");
         }
 
-        const documentPromise = vscode.workspace.openTextDocument(functionHits.file_path);
+        const documentPromise = vscode.workspace.openTextDocument(functionHits.filePath);
 
         let gutterDecorations: vscode.DecorationOptions[] = [];
 
@@ -276,15 +276,15 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
             hitDecorations.push([]);
         }
 
-        functionHits.line_hits.sort((a, b) => {
-            return (a.line_number - b.line_number);
+        functionHits.lineHits.sort((a, b) => {
+            return (a.lineNumber - b.lineNumber);
         });
 
         let maxChars = 1;
 
         let lastLine: number = 0;
-        for (const lineInfo of functionHits.line_hits) {
-            for (let line = lastLine; line < lineInfo.line_number; line++) {
+        for (const lineInfo of functionHits.lineHits) {
+            for (let line = lastLine; line < lineInfo.lineNumber; line++) {
                 gutterDecorations.push({
                     range: new vscode.Range(line, 0, line, 0),
                     renderOptions: {
@@ -295,22 +295,22 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                 });
             }
 
-            const text = `${lineInfo.total_samples}`;
+            const text = `${lineInfo.totalSamples}`;
             maxChars = Math.max(maxChars, text.length);
 
             gutterDecorations.push({
-                range: new vscode.Range(lineInfo.line_number, 0, lineInfo.line_number, 0),
+                range: new vscode.Range(lineInfo.lineNumber, 0, lineInfo.lineNumber, 0),
                 renderOptions: {
                     before: {
                         contentText: text,
                     }
                 },
             });
-            const index = Math.min(Math.trunc((lineInfo.total_samples / functionHits.total_samples) * hitDecorations.length), hitDecorations.length - 1);
+            const index = Math.min(Math.trunc((lineInfo.totalSamples / functionHits.totalSamples) * hitDecorations.length), hitDecorations.length - 1);
             hitDecorations[index].push(
-                new vscode.Range(lineInfo.line_number, 0, lineInfo.line_number, 0),
+                new vscode.Range(lineInfo.lineNumber, 0, lineInfo.lineNumber, 0),
             );
-            lastLine = lineInfo.line_number + 1;
+            lastLine = lineInfo.lineNumber + 1;
         }
 
         const configurationName = "workbench.editor.openSideBySideDirection";
@@ -329,7 +329,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
             }
             catch (error) {
                 vscode.window.showInformationMessage(
-                    `Could not open document '${functionHits.file_path}'\nMaybe you need to specify file mapping?`,
+                    `Could not open document '${functionHits?.filePath}'\nMaybe you need to specify file mapping?`,
                     'Browse'
                 ).then((item) => {
                     if (item === "Browse") {
@@ -364,8 +364,8 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
         const startOffset = -2; // function start is usually the open parenthesis
 
         editor.revealRange(new vscode.Range(
-            Math.min(Math.max(functionHits.line_number + startOffset, 0), functionHits.line_hits.at(0)?.line_number || functionHits.line_number), 0,
-            Math.max(functionHits.line_number, functionHits.line_hits.at(-1)?.line_number || functionHits.line_number), 0));
+            Math.min(Math.max(functionHits.lineNumber + startOffset, 0), functionHits.lineHits.at(0)?.lineNumber || functionHits.lineNumber), 0,
+            Math.max(functionHits.lineNumber, functionHits.lineHits.at(-1)?.lineNumber || functionHits.lineNumber), 0));
 
         for (let line = lastLine; line < editor.document.lineCount; line++) {
             gutterDecorations.push({

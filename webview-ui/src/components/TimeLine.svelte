@@ -63,19 +63,19 @@
             <div class="time-data">
               <span
                 class="time-idle"
-                style="width: {(process.start_time /
+                style="width: {(process.startTime /
                   (totalTime.end - totalTime.start)) *
                   100}%;"
               />
               <span
                 class="time-active"
-                style="width: {((process.end_time - process.start_time) /
+                style="width: {((process.endTime - process.startTime) /
                   (totalTime.end - totalTime.start)) *
                   100}%;"
               />
               <span
                 class="time-idle"
-                style="width: {((totalTime.end - process.end_time) /
+                style="width: {((totalTime.end - process.endTime) /
                   (totalTime.end - totalTime.start)) *
                   100}%;"
               />
@@ -112,19 +112,19 @@
                 <div class="time-data">
                   <span
                     class="time-idle"
-                    style="width: {(thread.start_time /
+                    style="width: {(thread.startTime /
                       (totalTime.end - totalTime.start)) *
                       100}%;"
                   />
                   <span
                     class="time-active"
-                    style="width: {((thread.end_time - thread.start_time) /
+                    style="width: {((thread.endTime - thread.startTime) /
                       (totalTime.end - totalTime.start)) *
                       100}%;"
                   />
                   <span
                     class="time-idle"
-                    style="width: {((totalTime.end - thread.end_time) /
+                    style="width: {((totalTime.end - thread.endTime) /
                       (totalTime.end - totalTime.start)) *
                       100}%;"
                   />
