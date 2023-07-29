@@ -41,17 +41,78 @@
         "title": "Snail",
         "properties": {
           "snail.server.executable": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "default": null,
-            "description": "Path to the snail server executable. If unset, the executable packaged with the extension will be used."
+            "type": "string",
+            "description": "Path to the snail server executable. If empty, the executable packaged with the extension will be used."
           },
           "snail.server.debug": {
             "type": "boolean",
             "default": false,
             "description": "Whether to start the server in debug mode. In this mode the server will wait for a debugger to attach right after start and will not do anything until then."
+          },
+          "snail.pdbSymbols.searchDirs": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "title": "directory"
+            },
+            "description": "Directories to search for module files (*.exe, *.dll) and debug symbol databases (*.pdb)."
+          },
+          "snail.pdbSymbols.cacheDir": {
+            "type": "string",
+            "description": "Directory to store debug symbols downloaded from symbol servers to. If empty, the default is $TEMP/SymbolCache."
+          },
+          "snail.pdbSymbols.serverUrls": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "title": "url"
+            },
+            "description": "URLs of additional symbol servers to download missing debug symbols from. E.g. https://msdl.microsoft.com/download/symbols."
+          },
+          "snail.pdbSymbols.noDefaultServerUrls": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, no default symbol servers are used, but only the ones specified by the user. The default symbol server is https://msdl.microsoft.com/download/symbols."
+          },
+          "snail.dwarfDebugInfo.searchDirs": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Directories to search for module files (executables and shared libraries *.so)"
+          },
+          "snail.dwarfDebugInfo.cacheDir": {
+            "type": "string",
+            "description": "Directory to store debug information downloaded from debuginfod servers to. If empty, the environment variable $DEBUGINFOD_CACHE_PATH is used. If not set, $XDG_CACHE_HOME/snail is used. If that is not set neither, a platform specific default is used (on Windows $TEMP/SnailCache. On other platforms, $HOME/.cache/snail or $TEMP/.cache/snail if the home directory could not be determined."
+          },
+          "snail.dwarfDebugInfo.debuginfodUrls": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "URLs of additional debuginfod servers to download missing debug information from. E.g. https://debuginfod.elfutils.org/."
+          },
+          "snail.dwarfDebugInfo.noDefaultDebuginfodUrls": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, no default symbol servers are used, but only the ones specified by the user. The default symbol servers are loaded from the environment variable $DEBUGINFOD_URLS."
+          },
+          "snail.moduleLookup.pathMap": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "Pattern of the path to match. This will be matches with the beginning of the path."
+                    },
+                    "target": {
+                        "type": "string",
+                        "description": "If a path matches with the source pattern, the matching part will be replaced by this replace text."
+                    }
+                }
+            },
+            "description": "Path maps to be applied to module paths (executables, *.dll, *.so, ...) before trying to look the modules up."
           }
         }
       }

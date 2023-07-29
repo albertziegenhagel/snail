@@ -52,7 +52,7 @@ export class Client {
 
 	private _getServerExecutablePath() : string {
 		const executableConfig : string | undefined = vscode.workspace.getConfiguration("snail")?.get("server.executable");
-		if(executableConfig) {
+		if(executableConfig && executableConfig.length > 0) {
 			return executableConfig;
 		}
 		let serverExecutableName = 'snail-server';
@@ -110,6 +110,82 @@ export class Client {
 		return connection;
 	}
 
+	private _sendUpdatePdbOptions() {
+		if (this._connection === undefined) {
+			return;
+		}
+
+		const configuration = vscode.workspace.getConfiguration("snail");
+		if(configuration === null || configuration === undefined) {
+			return;
+		}
+
+		const pdbSearchDirs = configuration.get<string[]>("pdbSymbols.searchDirs", []);
+		const pdbCacheDir = configuration.get<string>("pdbSymbols.cacheDir", "");
+		const pdbServerUrls = configuration.get<string[]>("pdbSymbols.serverUrls", []);
+		const pdbNoDefaultServerUrls = configuration.get<boolean>("pdbSymbols.noDefaultServerUrls", false);
+
+		this._connection.sendNotification(protocol.setPdbSymbolFindOptionsNotificationType, {
+			searchDirs : pdbSearchDirs,
+			symbolCacheDir : pdbCacheDir.length > 0 ? pdbCacheDir : null,
+			noDefaultUrls : pdbNoDefaultServerUrls,
+			symbolServerUrls : pdbServerUrls
+		});
+	}
+
+	private _sendUpdateDwarfOptions() {
+		if (this._connection === undefined) {
+			return;
+		}
+
+		const configuration = vscode.workspace.getConfiguration("snail");
+		if(configuration === null || configuration === undefined) {
+			return;
+		}
+
+		configuration.get("dwarfDebugInfo.searchDirs");
+		configuration.get("dwarfDebugInfo.cacheDir");
+		configuration.get("dwarfDebugInfo.debuginfodUrls");
+		configuration.get("dwarfDebugInfo.noDefaultDebuginfodUrls");
+		
+		const dwarfSearchDirs = configuration.get<string[]>("dwarfDebugInfo.searchDirs", []);
+		const dwarfCacheDir = configuration.get<string>("dwarfDebugInfo.cacheDir", "");
+		const dwarfDebuginfodUrls = configuration.get<string[]>("dwarfDebugInfo.debuginfodUrls", []);
+		const dwarfNoDefaultDebuginfodUrls = configuration.get<boolean>("dwarfDebugInfo.noDefaultDebuginfodUrls", false);
+
+		this._connection.sendNotification(protocol.setDwarfSymbolFindOptionsNotificationType, {
+			searchDirs : dwarfSearchDirs,
+			debuginfodCacheDir : dwarfCacheDir.length > 0 ? dwarfCacheDir : null,
+			noDefaultUrls : dwarfNoDefaultDebuginfodUrls,
+			debuginfodUrls : dwarfDebuginfodUrls
+		});
+	}
+	
+	private _sendUpdateModulePathMaps() {
+		if (this._connection === undefined) {
+			return;
+		}
+
+		const configuration = vscode.workspace.getConfiguration("snail");
+		if(configuration === null || configuration === undefined) {
+			return;
+		}
+
+		const modulePathMapsConfig = configuration.get<any[]>("moduleLookup.pathMap", []);
+
+		let modulePathMaps : string[][] = [];
+
+		for (const map of modulePathMapsConfig) {
+			modulePathMaps.push([
+				map['source'], map['target']
+			]);
+		}
+
+		this._connection.sendNotification(protocol.setModulePathMapsNotificationType, {
+			simpleMaps: modulePathMaps
+		});
+	}
+
 	private async _start(): Promise<void> {
 
 		this._clientState = ClientState.starting;
@@ -124,6 +200,18 @@ export class Client {
 		// this._connection.trace();
 
 		const initializeResult = this._connection.sendRequest(protocol.initializeRequestType, {});
+
+		this._sendUpdatePdbOptions();
+		this._sendUpdateDwarfOptions();
+		this._sendUpdateModulePathMaps();
+
+		vscode.workspace.onDidChangeConfiguration((event) => {
+			if(event.affectsConfiguration("snail")) {
+				this._sendUpdatePdbOptions();
+				this._sendUpdateDwarfOptions();
+				this._sendUpdateModulePathMaps();
+			}
+		});
 
 		this._clientState = ClientState.running;
 	}
