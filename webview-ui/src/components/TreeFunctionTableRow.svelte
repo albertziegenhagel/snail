@@ -16,19 +16,27 @@
     $: hasChildren =
         node !== null && (node.children === null || node.children.length > 0);
 
+    let expanded: boolean|null = null;
+
     $: if (node !== null && node.children !== null) {
         node.children.sort((a, b) => {
             return -(a.totalSamples - b.totalSamples);
         });
+        if(expanded === null) {
+          expanded = node.isHot;
+        }
     }
 
     $: isHot = node !== null && node.isHot;
     $: isActive = node !== null && activeFunction != null && processId == activeFunction.processId && node.functionId == activeFunction.functionId;
 
-    let expanded: boolean =
-        node !== null && node.children !== null && node.isHot;
     const toggleExpansion = () => {
-        expanded = !expanded;
+        if(expanded === null) {
+          expanded = true
+        }
+        else {
+          expanded = !expanded;
+        }
         if (expanded && node.children === null) {
             vscode.postMessage({
                 command: "expandCallTreeNode",
@@ -120,6 +128,7 @@
     }
     .twistie:before {
         cursor: pointer;
+        display: block;
     }
     .twistie.collapsed:before {
         transform: rotate(-90deg);
