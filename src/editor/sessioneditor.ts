@@ -223,7 +223,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             }
                         );
                         return;
-                    case "retrieveLineInfo":
+                    case "navigateToFunction":
                         client.retrieveLineInfo(document.documentId, message.processId, message.functionId).then(
                             (result) => {
                                 if (result === undefined) {
