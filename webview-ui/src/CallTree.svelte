@@ -13,8 +13,8 @@
   // $: {
   //   if(processes !== null) {
   //     for (const process of processes) {
-  //       if(process.id in roots) continue;
-  //       vscode.postMessage({ command: "retrieveCallTreeHotPath", processId: process.id });
+  //       if(process.key in roots) continue;
+  //       vscode.postMessage({ command: "retrieveCallTreeHotPath", processKey: process.key });
   //     }
   //     // TODO: remove old roots
   //   }
@@ -25,19 +25,19 @@
 
   // window.addEventListener("message", (event) => {
   //   if(event.data.type !== "callTreeHotPath") return;
-  //   roots[event.data.data['processId']] = event.data.data['root'];
+  //   roots[event.data.data['processKey']] = event.data.data['root'];
   // });
 </script>
 
 <FunctionTable stickyHeader={true}>
   {#if roots !== null}
-    {#each [...roots] as [processId, root]}
+    {#each [...roots] as [processKey, root]}
       <TreeFunctionTableRow
         on:navigate={(event) =>
           dispatch("navigate", {
             functionId: event.detail.functionId,
           })}
-        {processId}
+        {processKey}
         node={root}
         level={0}
         {activeFunction}

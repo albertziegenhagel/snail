@@ -35,14 +35,14 @@
                         on:navigate={() =>
                             dispatch("navigate", {
                                 functionId: {
-                                    processId: func.processId,
+                                    processKey: func.processKey,
                                     functionId: func.function.id,
                                 },
                             })}
                         func={func.function}
                         isHot={true}
-                        isActive={func.processId ==
-                            activeFunction?.processId &&
+                        isActive={func.processKey ==
+                            activeFunction?.processKey &&
                             func.function.id == activeFunction?.functionId}
                     />
                 {/each}

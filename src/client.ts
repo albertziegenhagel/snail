@@ -320,7 +320,7 @@ export class Client {
 		return result.then((data) => { return data.functions; });
 	}
 
-	public async retrieveCallTreeHotPath(documentId: number, processId: number): Promise<protocol.CallTreeNode> {
+	public async retrieveCallTreeHotPath(documentId: number, processKey: number): Promise<protocol.CallTreeNode> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.CallTreeNode>("Client is not connected");
@@ -328,14 +328,14 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.retrieveCallTreeHotPathRequestType, {
 			documentId: documentId,
-			processId: processId
+			processKey: processKey
 		});
 
 		return result.then((data) => { return data.root; });
 	}
 
 
-	public async retrieveFunctionsPage(documentId: number, processId: number,
+	public async retrieveFunctionsPage(documentId: number, processKey: number,
 		pageSize: number, pageIndex: number): Promise<protocol.FunctionNode[]> {
 		await this._started;
 		if (this._connection === undefined) {
@@ -344,7 +344,7 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.retrieveFunctionsPageRequestType, {
 			documentId: documentId,
-			processId: processId,
+			processKey: processKey,
 			pageSize: pageSize,
 			pageIndex: pageIndex
 		});
@@ -352,7 +352,7 @@ export class Client {
 		return result.then((data) => { return data.functions; });
 	}
 
-	public async expandCallTreeNode(documentId: number, processId: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
+	public async expandCallTreeNode(documentId: number, processKey: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.CallTreeNode[]>("Client is not connected");
@@ -360,7 +360,7 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.expandCallTreeNodeRequestType, {
 			documentId: documentId,
-			processId: processId,
+			processKey: processKey,
 			nodeId: nodeId
 		});
 
@@ -368,7 +368,7 @@ export class Client {
 	}
 
 
-	public async retrieveCallersCallees(documentId: number, processId: number, functionId: number, maxEntries: number = 6): Promise<protocol.RetrieveCallersCalleesResult> {
+	public async retrieveCallersCallees(documentId: number, processKey: number, functionId: number, maxEntries: number = 6): Promise<protocol.RetrieveCallersCalleesResult> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.RetrieveCallersCalleesResult>("Client is not connected");
@@ -376,7 +376,7 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.retrieveCallersCalleesRequestType, {
 			documentId: documentId,
-			processId: processId,
+			processKey: processKey,
 			functionId: functionId,
 			maxEntries: maxEntries
 		});
@@ -407,7 +407,7 @@ export class Client {
 	}
 
 
-	public async retrieveLineInfo(documentId: number, processId: number, functionId: number): Promise<protocol.RetrieveLineInfoResult|null> {
+	public async retrieveLineInfo(documentId: number, processKey: number, functionId: number): Promise<protocol.RetrieveLineInfoResult|null> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.RetrieveLineInfoResult|null>("Client is not connected");
@@ -415,7 +415,7 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.retrieveLineInfoRequestType, {
 			documentId: documentId,
-			processId: processId,
+			processKey: processKey,
 			functionId: functionId,
 		});
 

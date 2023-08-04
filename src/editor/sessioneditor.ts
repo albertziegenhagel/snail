@@ -136,12 +136,12 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveCallTreeHotPath":
-                        client.retrieveCallTreeHotPath(document.documentId, message.processId).then(
+                        client.retrieveCallTreeHotPath(document.documentId, message.processKey).then(
                             (root) => {
                                 webview.postMessage({
                                     "type": "callTreeHotPath",
                                     "data": {
-                                        "processId": message.processId,
+                                        "processKey": message.processKey,
                                         "root": root
                                     }
                                 });
@@ -151,7 +151,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveFunctionsPage":
-                        client.retrieveFunctionsPage(document.documentId, message.processId, message.pageSize, message.pageIndex).then(
+                        client.retrieveFunctionsPage(document.documentId, message.processKey, message.pageSize, message.pageIndex).then(
                             (functions) => {
                                 webview.postMessage({
                                     "type": "functionsPage",
@@ -167,7 +167,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "expandCallTreeNode":
-                        client.expandCallTreeNode(document.documentId, message.processId, message.nodeId).then(
+                        client.expandCallTreeNode(document.documentId, message.processKey, message.nodeId).then(
                             (children) => {
                                 webview.postMessage({
                                     "type": "callTreeNodeChildren",
@@ -182,12 +182,12 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveCallersCallees":
-                        client.retrieveCallersCallees(document.documentId, message.processId, message.functionId).then(
+                        client.retrieveCallersCallees(document.documentId, message.processKey, message.functionId).then(
                             (result) => {
                                 webview.postMessage({
                                     "type": "callersCallees",
                                     "data": {
-                                        "processId": message.processId,
+                                        "processKey": message.processKey,
                                         "function": result.function,
                                         "callers": result.callers,
                                         "callees": result.callees
@@ -224,7 +224,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                         );
                         return;
                     case "navigateToFunction":
-                        client.retrieveLineInfo(document.documentId, message.processId, message.functionId).then(
+                        client.retrieveLineInfo(document.documentId, message.processKey, message.functionId).then(
                             (result) => {
                                 if (result === undefined) {
                                     return;

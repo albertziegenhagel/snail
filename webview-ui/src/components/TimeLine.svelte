@@ -55,7 +55,7 @@
                   class:codicon-check={checked[processIndex].process}
                   bind:checked={checked[processIndex].process}
                 />
-                {process.name} (PID: {process.id})
+                {process.name} (PID: {process.osId})
               </div>
             </div>
           </td>
@@ -104,7 +104,7 @@
                       bind:checked={checked[processIndex].threads[threadIndex]}
                       disabled={!checked[processIndex].process}
                     />
-                    {thread.name === null ? "[thread]" : thread.name} (TID: {thread.id})
+                    {thread.name === null ? "[thread]" : thread.name} (TID: {thread.osId})
                   </div>
                 </div>
               </td>

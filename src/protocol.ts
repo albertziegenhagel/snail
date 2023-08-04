@@ -9,7 +9,9 @@ export enum ModuleFilterMode {
 }
 
 export interface ThreadInfo {
-    id: number;
+    key: number;
+
+    osId: number;
 
     // Time when the thread started (in nanoseconds since the session start).
     startTime: number;
@@ -21,7 +23,9 @@ export interface ThreadInfo {
 }
 
 export interface ProcessInfo {
-    id: number;
+    key: number;
+
+    osId: number;
 
     name: string;
 
@@ -106,7 +110,7 @@ export interface FunctionNode {
 }
 
 export interface ProcessFunction {
-    processId: number;
+    processKey: number;
 
     function: FunctionNode;
 }
@@ -181,7 +185,7 @@ export interface RetrieveHottestFunctionsResult {
 }
 
 export interface RetrieveCallTreeHotPathParams {
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
@@ -197,7 +201,7 @@ export interface RetrieveFunctionsPageParams {
 
     pageIndex: number;
 
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
@@ -211,7 +215,7 @@ export interface RetrieveFunctionsPageResult {
 export interface ExpandCallTreeNodeParams {
     nodeId: number;
 
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
@@ -227,7 +231,7 @@ export interface RetrieveCallersCalleesParams {
 
     functionId: number;
 
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
@@ -245,7 +249,7 @@ export interface RetrieveCallersCalleesResult {
 export interface RetrieveLineInfoParams {
     functionId: number;
 
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
