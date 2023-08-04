@@ -121,6 +121,21 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to retrieve processes: ${reason}`);
                             });
                         return;
+                    case "setSampleFilter":
+                        client.setSampleFilter(document.documentId, message.minTime, message.maxTime, message.excludedProcesses, message.excludedThreads).then(
+                            () => {
+                                webview.postMessage({
+                                    "type": "filterSet",
+                                    "data": {
+                                        minTime: message.minTime,
+                                        maxTime: message.maxTime
+                                    }
+                                });
+                            },
+                            (reason) => {
+                                vscode.window.showErrorMessage(`Failed to set sample filter: ${reason}`);
+                            });
+                        return;
                     case "retrieveHottestFunctions":
                         client.retrieveHottestFunctions(document.documentId).then(
                             (functions) => {

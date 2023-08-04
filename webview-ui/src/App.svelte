@@ -17,6 +17,7 @@
     vsCodePanelView,
     vsCodePanelTab,
     vsCodeProgressRing,
+    vsCodeButton
   } from "@vscode/webview-ui-toolkit";
 
   import Summary from "./Summary.svelte";
@@ -27,7 +28,8 @@
     vsCodePanels(),
     vsCodePanelTab(),
     vsCodePanelView(),
-    vsCodeProgressRing()
+    vsCodeProgressRing(),
+    vsCodeButton()
   );
 
   let totalTime: TimeSpan = null;
@@ -42,6 +44,8 @@
   let callTreeRoots: Map<number, CallTreeNode> = null;
 
   let hotFunctions: ProcessFunction[] = null;
+
+  let activeSelectionFilter: TimeSpan = null;
 
   onMount(() => {
     vscode.postMessage({ command: "retrieveSessionInfo" });
@@ -64,6 +68,16 @@
         functionId: activeFunction.functionId,
       });
     }
+  }
+
+  function applyFilter(minTime: number|null, maxTime: number|null, excludedProcesses: number[], excludedThreads: number[]) {
+    vscode.postMessage({
+      command: "setSampleFilter",
+      minTime: minTime,
+      maxTime: maxTime,
+      excludedProcesses: excludedProcesses,
+      excludedThreads: excludedThreads,
+    });
   }
 
   window.addEventListener("message", (event) => {
@@ -131,6 +145,32 @@
       callTreeRoots = callTreeRoots;
     }
 
+    if (event.data.type === "filterSet") {
+      console.log(event.data.data);
+      if(event.data.data["minTime"] === null && event.data.data["maxTime"] === null)
+      {
+        activeSelectionFilter = null;
+      }
+      else {
+        activeSelectionFilter = {
+          start: event.data.data["minTime"],
+          end: event.data.data["maxTime"]
+        };
+      }
+      activeFunction = null;
+      activeCallerCalleeNode = null;
+      callTreeRoots = null;
+      hotFunctions = null;
+      callTreeRoots = new Map<number, CallTreeNode>();
+      for (const process of processes) {
+        vscode.postMessage({
+          command: "retrieveCallTreeHotPath",
+          processKey: process.key,
+        });
+      }
+      vscode.postMessage({ command: "retrieveHottestFunctions" });
+    }
+
     if (event.data.type === "callersCallees") {
       if (event.data.data["processKey"] !== activeFunction?.processKey) return;
       if (event.data.data["function"]["id"] !== activeFunction?.functionId)
@@ -173,12 +213,14 @@
       <section>
         <Summary
           on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
+          on:filter={(event) => applyFilter(event.detail.minTime, event.detail.maxTime, event.detail.excludedProcesses, event.detail.excludedThreads)}
           {processes}
           {totalTime}
           {sessionInfo}
           {systemInfo}
           {hotFunctions}
           {activeFunction}
+          {activeSelectionFilter}
         />
       </section>
     </vscode-panel-view>

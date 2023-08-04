@@ -312,6 +312,22 @@ export interface SetModuleFiltersParams {
     include: string[];
 }
 
+export interface SetSampleFiltersParams {
+    excludedProcesses: number[];
+
+    excludedThreads: number[];
+
+    // The id of the document to perform the operation on.
+    // This should be an id that resulted from a call to `readDocument`.
+    documentId: number;
+
+    // In nanoseconds since session start.
+    minTime: number | null;
+
+    // In nanoseconds since session start.
+    maxTime: number | null;
+}
+
 
 export const initializeRequestType = new rpc.RequestType<InitializeParams, InitializeResult, void>('initialize');
 
@@ -347,6 +363,9 @@ export const retrieveCallersCalleesRequestType = new rpc.RequestType<RetrieveCal
 
 
 export const retrieveLineInfoRequestType = new rpc.RequestType<RetrieveLineInfoParams, RetrieveLineInfoResult | null, void>('retrieveLineInfo');
+
+
+export const setSampleFiltersRequestType = new rpc.RequestType<SetSampleFiltersParams, null, void>('setSampleFilters');
 
 
 export const closeDocumentNotificationType = new rpc.NotificationType<CloseDocumentParams>('closeDocument');

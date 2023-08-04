@@ -9,9 +9,13 @@
 </script>
 
 <div class="pane">
-    <div on:click={toggleExpansion} on:keypress={toggleExpansion} class="pane-header">
-        <div class="twistie codicon codicon-chevron-down" class:collapsed={!expanded}></div>
-        <h3 class="title" title="{title}">{title}</h3>
+    <div on:click|self={toggleExpansion} on:keypress|self={toggleExpansion} class="pane-header">
+        <div on:click|self={toggleExpansion} on:keypress|self={toggleExpansion} class="twistie codicon codicon-chevron-down" class:collapsed={!expanded}></div>
+        <h3 on:click|self={toggleExpansion} on:keypress|self={toggleExpansion} class="title" title="{title}">{title}</h3>
+
+        <div class="toolbar">
+          <slot name="toolbar"></slot>
+        </div>
     </div>
     <div class="pane-body" class:collapsed={!expanded}>
         <slot></slot>
@@ -20,7 +24,9 @@
 
 <style>
     .pane-header {
+        height: 22px;
         line-height: 22px;
+        box-sizing: border-box;
         color: var(--vscode-sideBarSectionHeader-foreground);
         background-color: var(--vscode-sideBarSectionHeader-background);
         border-top: 1px solid var(--vscode-sideBarSectionHeader-border);
@@ -35,6 +41,9 @@
         margin-block-start: 0;
         margin-block-end: 0;
         font-size: 11px;
+    }
+    .pane-header .toolbar {
+        margin-left: auto;
     }
 
     .pane-body {

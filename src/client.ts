@@ -305,6 +305,23 @@ export class Client {
 		return result.then((data) => { return data.processes; });
 	}
 
+	public async setSampleFilter(documentId: number, minTime: number|null, maxTime: number|null, excludedProcesses: number[], excludedThreads: number[]): Promise<null> {
+		await this._started;
+		if (this._connection === undefined) {
+			return Promise.reject<null>("Client is not connected");
+		}
+
+		const result = this._connection.sendRequest(protocol.setSampleFiltersRequestType, {
+			documentId: documentId,
+			minTime: minTime,
+			maxTime: maxTime,
+			excludedProcesses: excludedProcesses,
+			excludedThreads: excludedThreads,
+		});
+
+		return result;
+	}
+
 	public async retrieveHottestFunctions(documentId: number, count: number = 4): Promise<protocol.ProcessFunction[]> {
 		await this._started;
 		if (this._connection === undefined) {
