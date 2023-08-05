@@ -113,6 +113,30 @@
                 }
             },
             "description": "Path maps to be applied to module paths (executables, *.dll, *.so, ...) before trying to look the modules up."
+          },
+          "snail.moduleLookup.filterMode": {
+            "type": "string",
+            "enum": ["All but excluded", "Only included"],
+            "default": "All but excluded",
+            "enumDescriptions": [
+              "Load all modules but the ones given in the `Filter Exclude` list",
+              "Load only modules explicitly given in the `Filter Include` list"
+            ],
+            "description": "The mode the filter should operate in."
+          },
+          "snail.moduleLookup.filterInclude": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Modules to exclude when \"Filter Mode\" is \"All but excluded\". Supports wildcards (as in '*.exe'). Needs to match the whole path, not just the filename."
+          },
+          "snail.moduleLookup.filterExclude": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Modules to include when \"Filter Mode\" is \"Only included\". Supports wildcards (as in '*.exe'). Needs to match the whole path, not just the filename."
           }
         }
       }
