@@ -12,10 +12,10 @@
   // let callers: Function[] = [];
   // let callees: Function[] = [];
 
-  // $: if (activeFunction !== null && activeFunction.processId !== null && activeFunction.functionId !== null) {
+  // $: if (activeFunction !== null && activeFunction.processKey !== null && activeFunction.functionId !== null) {
   //   vscode.postMessage({
   //     command: "retrieveCallersCallees",
-  //     processId: activeFunction.processId,
+  //     processKey: activeFunction.processKey,
   //     functionId: activeFunction.functionId,
   //   });
   // }
@@ -23,7 +23,7 @@
   function navigateTo(func: FunctionNode) {
     dispatch("navigate", {
       functionId: {
-        processId: node.processId,
+        processKey: node.processKey,
         functionId: func.id,
       },
     });

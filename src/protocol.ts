@@ -9,7 +9,9 @@ export enum ModuleFilterMode {
 }
 
 export interface ThreadInfo {
-    id: number;
+    key: number;
+
+    osId: number;
 
     // Time when the thread started (in nanoseconds since the session start).
     startTime: number;
@@ -21,7 +23,9 @@ export interface ThreadInfo {
 }
 
 export interface ProcessInfo {
-    id: number;
+    key: number;
+
+    osId: number;
 
     name: string;
 
@@ -106,7 +110,7 @@ export interface FunctionNode {
 }
 
 export interface ProcessFunction {
-    processId: number;
+    processKey: number;
 
     function: FunctionNode;
 }
@@ -181,7 +185,7 @@ export interface RetrieveHottestFunctionsResult {
 }
 
 export interface RetrieveCallTreeHotPathParams {
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
@@ -197,7 +201,7 @@ export interface RetrieveFunctionsPageParams {
 
     pageIndex: number;
 
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
@@ -211,7 +215,7 @@ export interface RetrieveFunctionsPageResult {
 export interface ExpandCallTreeNodeParams {
     nodeId: number;
 
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
@@ -227,7 +231,7 @@ export interface RetrieveCallersCalleesParams {
 
     functionId: number;
 
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
@@ -245,7 +249,7 @@ export interface RetrieveCallersCalleesResult {
 export interface RetrieveLineInfoParams {
     functionId: number;
 
-    processId: number;
+    processKey: number;
 
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
@@ -308,6 +312,22 @@ export interface SetModuleFiltersParams {
     include: string[];
 }
 
+export interface SetSampleFiltersParams {
+    excludedProcesses: number[];
+
+    excludedThreads: number[];
+
+    // The id of the document to perform the operation on.
+    // This should be an id that resulted from a call to `readDocument`.
+    documentId: number;
+
+    // In nanoseconds since session start.
+    minTime: number | null;
+
+    // In nanoseconds since session start.
+    maxTime: number | null;
+}
+
 
 export const initializeRequestType = new rpc.RequestType<InitializeParams, InitializeResult, void>('initialize');
 
@@ -343,6 +363,9 @@ export const retrieveCallersCalleesRequestType = new rpc.RequestType<RetrieveCal
 
 
 export const retrieveLineInfoRequestType = new rpc.RequestType<RetrieveLineInfoParams, RetrieveLineInfoResult | null, void>('retrieveLineInfo');
+
+
+export const setSampleFiltersRequestType = new rpc.RequestType<SetSampleFiltersParams, null, void>('setSampleFilters');
 
 
 export const closeDocumentNotificationType = new rpc.NotificationType<CloseDocumentParams>('closeDocument');

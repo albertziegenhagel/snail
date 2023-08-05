@@ -17,6 +17,7 @@
     vsCodePanelView,
     vsCodePanelTab,
     vsCodeProgressRing,
+    vsCodeButton
   } from "@vscode/webview-ui-toolkit";
 
   import Summary from "./Summary.svelte";
@@ -27,7 +28,8 @@
     vsCodePanels(),
     vsCodePanelTab(),
     vsCodePanelView(),
-    vsCodeProgressRing()
+    vsCodeProgressRing(),
+    vsCodeButton()
   );
 
   let totalTime: TimeSpan = null;
@@ -43,6 +45,8 @@
 
   let hotFunctions: ProcessFunction[] = null;
 
+  let activeSelectionFilter: TimeSpan = null;
+
   onMount(() => {
     vscode.postMessage({ command: "retrieveSessionInfo" });
     vscode.postMessage({ command: "retrieveSystemInfo" });
@@ -54,16 +58,26 @@
     activeFunction = functionId;
     vscode.postMessage({
       command: "retrieveCallersCallees",
-      processId: activeFunction.processId,
+      processKey: activeFunction.processKey,
       functionId: activeFunction.functionId,
     });
     if(navigate) {
       vscode.postMessage({
         command: "navigateToFunction",
-        processId: activeFunction.processId,
+        processKey: activeFunction.processKey,
         functionId: activeFunction.functionId,
       });
     }
+  }
+
+  function applyFilter(minTime: number|null, maxTime: number|null, excludedProcesses: number[], excludedThreads: number[]) {
+    vscode.postMessage({
+      command: "setSampleFilter",
+      minTime: minTime,
+      maxTime: maxTime,
+      excludedProcesses: excludedProcesses,
+      excludedThreads: excludedThreads,
+    });
   }
 
   window.addEventListener("message", (event) => {
@@ -103,40 +117,66 @@
     if (event.data.type === "processes") {
       processes = event.data.data;
       for (const process of processes) {
-        if (callTreeRoots === null || !(process.id in callTreeRoots)) {
+        if (callTreeRoots === null || !(process.key in callTreeRoots)) {
           vscode.postMessage({
             command: "retrieveCallTreeHotPath",
-            processId: process.id,
+            processKey: process.key,
           });
           if (callTreeRoots === null) {
             callTreeRoots = new Map<number, CallTreeNode>();
           }
-          callTreeRoots.set(process.id, null);
+          callTreeRoots.set(process.key, null);
         }
       }
       if (callTreeRoots !== null) {
-        for (let processId of callTreeRoots.keys()) {
+        for (let processKey of callTreeRoots.keys()) {
           let hasProcess = false;
           for (const process of processes) {
-            if (process.id === processId) {
+            if (process.key === processKey) {
               hasProcess = true;
               break;
             }
           }
           if (!hasProcess) {
-            callTreeRoots.delete(processId);
+            callTreeRoots.delete(processKey);
           }
         }
       }
       callTreeRoots = callTreeRoots;
     }
 
+    if (event.data.type === "filterSet") {
+      console.log(event.data.data);
+      if(event.data.data["minTime"] === null && event.data.data["maxTime"] === null)
+      {
+        activeSelectionFilter = null;
+      }
+      else {
+        activeSelectionFilter = {
+          start: event.data.data["minTime"],
+          end: event.data.data["maxTime"]
+        };
+      }
+      activeFunction = null;
+      activeCallerCalleeNode = null;
+      callTreeRoots = null;
+      hotFunctions = null;
+      callTreeRoots = new Map<number, CallTreeNode>();
+      for (const process of processes) {
+        vscode.postMessage({
+          command: "retrieveCallTreeHotPath",
+          processKey: process.key,
+        });
+      }
+      vscode.postMessage({ command: "retrieveHottestFunctions" });
+    }
+
     if (event.data.type === "callersCallees") {
-      if (event.data.data["processId"] !== activeFunction?.processId) return;
+      if (event.data.data["processKey"] !== activeFunction?.processKey) return;
       if (event.data.data["function"]["id"] !== activeFunction?.functionId)
         return;
       activeCallerCalleeNode = {
-        processId: activeFunction.processId,
+        processKey: activeFunction.processKey,
         function: event.data.data["function"],
         callers: event.data.data["callers"],
         callees: event.data.data["callees"],
@@ -144,7 +184,7 @@
     }
 
     if (event.data.type === "callTreeHotPath") {
-      callTreeRoots.set(event.data.data["processId"], event.data.data["root"]);
+      callTreeRoots.set(event.data.data["processKey"], event.data.data["root"]);
       callTreeRoots = callTreeRoots;
     }
 
@@ -152,7 +192,7 @@
       hotFunctions = event.data.data["functions"];
       if (activeFunction == null && hotFunctions.length > 0) {
         changeActiveFunction({
-          processId: hotFunctions[0].processId,
+          processKey: hotFunctions[0].processKey,
           functionId: hotFunctions[0].function.id,
         }, false);
       }
@@ -173,12 +213,14 @@
       <section>
         <Summary
           on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
+          on:filter={(event) => applyFilter(event.detail.minTime, event.detail.maxTime, event.detail.excludedProcesses, event.detail.excludedThreads)}
           {processes}
           {totalTime}
           {sessionInfo}
           {systemInfo}
           {hotFunctions}
           {activeFunction}
+          {activeSelectionFilter}
         />
       </section>
     </vscode-panel-view>

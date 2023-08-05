@@ -7,14 +7,16 @@ export interface TimeSpan {
 }
 
 export interface ThreadInfo {
-    id: number;
+    key: number;
+    osId: number;
     name: string;
     startTime: number;
     endTime: number;
 }
 
 export interface ProcessInfo {
-    id: number;
+    key: number;
+    osId: number;
     name: string;
     startTime: number;
     endTime: number;
@@ -47,18 +49,18 @@ export interface CallTreeNode {
 };
 
 export interface CallerCalleeNode {
-    processId : number;
+    processKey : number;
     function : FunctionNode;
     callers : FunctionNode[];
     callees : FunctionNode[];
 };
 
 export interface FunctionId {
-    processId : number;
+    processKey : number;
     functionId : number;
 };
 
 export interface ProcessFunction {
-    processId : number;
+    processKey: number;
     function : FunctionNode;
 };

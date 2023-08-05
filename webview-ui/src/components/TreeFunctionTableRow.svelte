@@ -6,7 +6,7 @@
 
     import FunctionTableRow from "./FunctionTableRow.svelte";
 
-    export let processId: number;
+    export let processKey: number;
     export let node: CallTreeNode;
     export let level: number;
     export let activeFunction: FunctionId;
@@ -28,7 +28,7 @@
     }
 
     $: isHot = node !== null && node.isHot;
-    $: isActive = node !== null && activeFunction != null && processId == activeFunction.processId && node.functionId == activeFunction.functionId;
+    $: isActive = node !== null && activeFunction != null && processKey == activeFunction.processKey && node.functionId == activeFunction.functionId;
 
     const toggleExpansion = () => {
         if(expanded === null) {
@@ -40,7 +40,7 @@
         if (expanded && node.children === null) {
             vscode.postMessage({
                 command: "expandCallTreeNode",
-                processId: processId,
+                processKey: processKey,
                 nodeId: node.id,
             });
         }
@@ -49,7 +49,7 @@
     function navigateToSelf() {
         dispatch("navigate", {
             functionId: {
-                processId: processId,
+                processKey: processKey,
                 functionId: node.functionId,
             },
         });
@@ -96,7 +96,7 @@
             <svelte:self
                 on:navigate={(event) =>
                     navigateToChild(event.detail.functionId)}
-                {processId}
+                {processKey}
                 node={child}
                 level={level + 1}
                 {activeFunction}
@@ -105,7 +105,7 @@
     {:else}
         <!-- Placeholder -->
         <svelte:self
-            {processId}
+            {processKey}
             node={null}
             level={level + 1}
         />

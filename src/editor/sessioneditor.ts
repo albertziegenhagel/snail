@@ -121,6 +121,21 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to retrieve processes: ${reason}`);
                             });
                         return;
+                    case "setSampleFilter":
+                        client.setSampleFilter(document.documentId, message.minTime, message.maxTime, message.excludedProcesses, message.excludedThreads).then(
+                            () => {
+                                webview.postMessage({
+                                    "type": "filterSet",
+                                    "data": {
+                                        minTime: message.minTime,
+                                        maxTime: message.maxTime
+                                    }
+                                });
+                            },
+                            (reason) => {
+                                vscode.window.showErrorMessage(`Failed to set sample filter: ${reason}`);
+                            });
+                        return;
                     case "retrieveHottestFunctions":
                         client.retrieveHottestFunctions(document.documentId).then(
                             (functions) => {
@@ -136,12 +151,12 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveCallTreeHotPath":
-                        client.retrieveCallTreeHotPath(document.documentId, message.processId).then(
+                        client.retrieveCallTreeHotPath(document.documentId, message.processKey).then(
                             (root) => {
                                 webview.postMessage({
                                     "type": "callTreeHotPath",
                                     "data": {
-                                        "processId": message.processId,
+                                        "processKey": message.processKey,
                                         "root": root
                                     }
                                 });
@@ -151,7 +166,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveFunctionsPage":
-                        client.retrieveFunctionsPage(document.documentId, message.processId, message.pageSize, message.pageIndex).then(
+                        client.retrieveFunctionsPage(document.documentId, message.processKey, message.pageSize, message.pageIndex).then(
                             (functions) => {
                                 webview.postMessage({
                                     "type": "functionsPage",
@@ -167,7 +182,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "expandCallTreeNode":
-                        client.expandCallTreeNode(document.documentId, message.processId, message.nodeId).then(
+                        client.expandCallTreeNode(document.documentId, message.processKey, message.nodeId).then(
                             (children) => {
                                 webview.postMessage({
                                     "type": "callTreeNodeChildren",
@@ -182,12 +197,12 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveCallersCallees":
-                        client.retrieveCallersCallees(document.documentId, message.processId, message.functionId).then(
+                        client.retrieveCallersCallees(document.documentId, message.processKey, message.functionId).then(
                             (result) => {
                                 webview.postMessage({
                                     "type": "callersCallees",
                                     "data": {
-                                        "processId": message.processId,
+                                        "processKey": message.processKey,
                                         "function": result.function,
                                         "callers": result.callers,
                                         "callees": result.callees
@@ -224,7 +239,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                         );
                         return;
                     case "navigateToFunction":
-                        client.retrieveLineInfo(document.documentId, message.processId, message.functionId).then(
+                        client.retrieveLineInfo(document.documentId, message.processKey, message.functionId).then(
                             (result) => {
                                 if (result === undefined) {
                                     return;
