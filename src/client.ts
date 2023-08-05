@@ -185,6 +185,32 @@ export class Client {
 			simpleMaps: modulePathMaps
 		});
 	}
+	
+	private _sendUpdateModuleFilters() {
+		if (this._connection === undefined) {
+			return;
+		}
+
+		const configuration = vscode.workspace.getConfiguration("snail");
+		if(configuration === null || configuration === undefined) {
+			return;
+		}
+
+		let mode = protocol.ModuleFilterMode.allButExcluded;
+		const modeStr = configuration.get<string>("moduleLookup.filterMode", "All but excluded");
+		if(modeStr === "Only included") {
+			mode = protocol.ModuleFilterMode.onlyIncluded;
+		}
+
+		const include = configuration.get<string[]>("moduleLookup.filterInclude", []);
+		const exclude = configuration.get<string[]>("moduleLookup.filterExclude", []);
+
+		this._connection.sendNotification(protocol.setModuleFiltersNotificationType, {
+			mode: mode,
+			include: include,
+			exclude: exclude
+		});
+	}
 
 	private async _start(): Promise<void> {
 
@@ -204,12 +230,14 @@ export class Client {
 		this._sendUpdatePdbOptions();
 		this._sendUpdateDwarfOptions();
 		this._sendUpdateModulePathMaps();
+		this._sendUpdateModuleFilters();
 
 		vscode.workspace.onDidChangeConfiguration((event) => {
 			if(event.affectsConfiguration("snail")) {
 				this._sendUpdatePdbOptions();
 				this._sendUpdateDwarfOptions();
 				this._sendUpdateModulePathMaps();
+				this._sendUpdateModuleFilters();
 			}
 		});
 

@@ -3,6 +3,11 @@
 import * as rpc from 'vscode-jsonrpc/node';
 
 
+export enum ModuleFilterMode {
+    allButExcluded = "all_but_excluded",
+    onlyIncluded = "only_included",
+}
+
 export interface ThreadInfo {
     id: number;
 
@@ -293,6 +298,16 @@ export interface SetDwarfSymbolFindOptionsParams {
     debuginfodCacheDir: string | null;
 }
 
+export interface SetModuleFiltersParams {
+    mode: ModuleFilterMode;
+
+    // Modules to exclude when `mode` is `AllButExcluded`. Supports wildcards (as in '*.exe').
+    exclude: string[];
+
+    // Modules to include when `mode` is `IncludedOnly`. Supports wildcards (as in '*.exe').
+    include: string[];
+}
+
 
 export const initializeRequestType = new rpc.RequestType<InitializeParams, InitializeResult, void>('initialize');
 
@@ -340,6 +355,9 @@ export const setPdbSymbolFindOptionsNotificationType = new rpc.NotificationType<
 
 
 export const setDwarfSymbolFindOptionsNotificationType = new rpc.NotificationType<SetDwarfSymbolFindOptionsParams>('setDwarfSymbolFindOptions');
+
+
+export const setModuleFiltersNotificationType = new rpc.NotificationType<SetModuleFiltersParams>('setModuleFilters');
 
 
 export const exitNotificationType = new rpc.NotificationType<void>('exit');
