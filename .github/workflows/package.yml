@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write
+  deployments: write
+
 jobs:
   package:
     strategy:
@@ -57,10 +61,16 @@ jobs:
       - name: Package
         run: |
           rm server/snail-server-${{ matrix.arch }}-${{ matrix.platform }}.${{ matrix.ext }}
-          vsce package --target ${{ matrix.target }}
+          vsce package --target ${{ matrix.target }} --pre-release
 
       - name: Upload binaries
         uses: actions/upload-artifact@v3
         with: 
           name: snail-${{ matrix.target }}
           path: ${{ github.workspace }}/*.vsix
+
+  deploy-head:
+    name: "Deploy head"
+    needs: package
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-head.yml

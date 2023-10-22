@@ -3,6 +3,7 @@
   "displayName": "Snail",
   "description": "VS Code extension to display profiling data",
   "author": "Albert Ziegenhagel",
+  "publisher": "albertziegenhagel",
   "license": "MIT",
   "version": "0.0.1",
   "homepage": "https://github.com/albertziegenhagel/snail",
