@@ -9,6 +9,8 @@
     CallTreeNode,
     TimeSpan,
     ProcessFunction,
+    ProcessFunctions,
+    SampleSourceInfo,
   } from "./utilities/types";
 
   import {
@@ -23,6 +25,7 @@
   import Summary from "./Summary.svelte";
   import CallTree from "./CallTree.svelte";
   import CallerCallee from "./CallerCallee.svelte";
+  import FunctionsPage from "./FunctionsPage.svelte";
 
   provideVSCodeDesignSystem().register(
     vsCodePanels(),
@@ -33,9 +36,14 @@
   );
 
   let totalTime: TimeSpan = null;
+  let sampleSources: SampleSourceInfo[] = [];
+  let sourceInfo = null;
   let sessionInfo = null;
   let systemInfo = null;
   let processes: ProcessInfo[] = null;
+
+  let activeHotSourceIndex: number = null;
+  let activeMainSourceIndex: number = null;
 
   let activeFunction: FunctionId = null;
 
@@ -48,10 +56,10 @@
   let activeSelectionFilter: TimeSpan = null;
 
   onMount(() => {
+    vscode.postMessage({ command: "retrieveSampleSources" });
     vscode.postMessage({ command: "retrieveSessionInfo" });
     vscode.postMessage({ command: "retrieveSystemInfo" });
     vscode.postMessage({ command: "retrieveProcesses" });
-    vscode.postMessage({ command: "retrieveHottestFunctions" });
   });
 
   function changeActiveFunction(functionId: FunctionId, navigate = true) {
@@ -60,12 +68,15 @@
       command: "retrieveCallersCallees",
       processKey: activeFunction.processKey,
       functionId: activeFunction.functionId,
+      sortSourceId: activeMainSourceIndex !== null ? sampleSources[activeMainSourceIndex].id : null,
     });
     if(navigate) {
       vscode.postMessage({
         command: "navigateToFunction",
         processKey: activeFunction.processKey,
         functionId: activeFunction.functionId,
+        sampleSources: sampleSources,
+        sourceIndex: activeMainSourceIndex,
       });
     }
   }
@@ -81,6 +92,49 @@
   }
 
   window.addEventListener("message", (event) => {
+    if (event.data.type === "sampleSources") {
+      const sources : any[] = event.data.data;
+      const oldSampleSources = sampleSources;
+      sampleSources = sources;
+      if(sources.length == 0) {
+        activeMainSourceIndex = null;
+        activeHotSourceIndex = null;
+      }
+      else {
+        const timerSourceIndex = sources.findIndex(sourceInfo => sourceInfo.name === "Timer" || sourceInfo.name.startsWith("cycles"));
+        const timerSource = timerSourceIndex === -1 ? undefined : sources[timerSourceIndex];
+
+        const activeMainSourceId = activeMainSourceIndex !== null ? oldSampleSources[activeMainSourceIndex].id : null;
+        const activeMainSource = sources.find(sourceInfo => sourceInfo.id === activeMainSourceId);
+        if(activeMainSource === undefined) {
+          if(timerSource !== undefined) {
+            activeMainSourceIndex = timerSourceIndex;
+          }
+          else {
+            activeMainSourceIndex = 0;
+          }
+        }
+
+        const activeHotSourceId = activeHotSourceIndex !== null ? oldSampleSources[activeHotSourceIndex].id : null;
+        const activeHotSource = sources.find(sourceInfo => sourceInfo.id === activeHotSourceId);
+        if(activeHotSource === undefined) {
+          if(timerSource !== undefined) {
+            activeHotSourceIndex = timerSourceIndex;
+          }
+          else {
+            activeHotSourceIndex = 0;
+          }
+          vscode.postMessage({ command: "retrieveHottestFunctions", sourceId: sampleSources[activeHotSourceIndex].id });
+        }
+      }
+      let newSourceInfo = []
+      for (const source of sources) {
+        newSourceInfo.push(
+          {key: source.name, value: `${source.numberOfSamples} samples (${source.averageSamplingRate.toFixed(0)} samples/s) ; ${source.hasStacks ? "has" : "no"} stacks`}
+        )
+      }
+      sourceInfo = newSourceInfo
+    }
     if (event.data.type === "sessionInfo") {
       const info = event.data.data;
       const date = new Date(Date.parse(info.date));
@@ -94,10 +148,6 @@
         { key: "Processes", value: info.numberOfProcesses },
         { key: "Threads", value: info.numberOfThreads },
         { key: "Total Samples", value: info.numberOfSamples },
-        {
-          key: "Average Sample Rate",
-          value: `${info.averageSamplingRate.toFixed(4)} samples/s`,
-        },
       ];
       totalTime = {
         start: 0,
@@ -121,6 +171,7 @@
           vscode.postMessage({
             command: "retrieveCallTreeHotPath",
             processKey: process.key,
+            sourceId: activeHotSourceIndex !== null ? sampleSources[activeHotSourceIndex].id : null,
           });
           if (callTreeRoots === null) {
             callTreeRoots = new Map<number, CallTreeNode>();
@@ -166,9 +217,10 @@
         vscode.postMessage({
           command: "retrieveCallTreeHotPath",
           processKey: process.key,
+          sourceId: activeHotSourceIndex !== null ? sampleSources[activeHotSourceIndex].id : null
         });
       }
-      vscode.postMessage({ command: "retrieveHottestFunctions" });
+      vscode.postMessage({ command: "retrieveHottestFunctions", sourceId : activeHotSourceIndex !== null ? sampleSources[activeHotSourceIndex].id : null });
     }
 
     if (event.data.type === "callersCallees") {
@@ -214,13 +266,15 @@
         <Summary
           on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
           on:filter={(event) => applyFilter(event.detail.minTime, event.detail.maxTime, event.detail.excludedProcesses, event.detail.excludedThreads)}
-          {processes}
-          {totalTime}
-          {sessionInfo}
-          {systemInfo}
-          {hotFunctions}
-          {activeFunction}
-          {activeSelectionFilter}
+          processes={processes}
+          totalTime={totalTime}
+          sampleSources={sampleSources}
+          sessionInfo={sessionInfo}
+          systemInfo={systemInfo}
+          sourceInfo={sourceInfo}
+          hotFunctions={hotFunctions}
+          activeFunction={activeFunction}
+          activeSelectionFilter={activeSelectionFilter}
         />
       </section>
     </vscode-panel-view>
@@ -230,6 +284,8 @@
         <CallTree
           on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
           roots={callTreeRoots}
+          hotSourceIndex={activeHotSourceIndex}
+          sampleSources={sampleSources}
           {activeFunction}
         />
       </section>
@@ -240,6 +296,7 @@
         <CallerCallee
           on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
           node={activeCallerCalleeNode}
+          activeSourceIndex={activeMainSourceIndex}
         />
       </section>
     </vscode-panel-view>
@@ -249,7 +306,14 @@
     </vscode-panel-view>
 
     <vscode-panel-view id="functions-view">
-      <section>functions...</section>
+      <section>
+        <FunctionsPage
+          on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
+          sampleSources={sampleSources}
+          processes={processes}
+          activeFunction={activeFunction}
+        />
+      </section>
     </vscode-panel-view>
 
     <!-- <vscode-panel-view id="flame-graph-view">

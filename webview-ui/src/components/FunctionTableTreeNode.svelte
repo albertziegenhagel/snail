@@ -2,14 +2,16 @@
     import { createEventDispatcher } from "svelte";
 
     import { vscode } from "../utilities/vscode";
-    import type { CallTreeNode, FunctionId } from "../utilities/types";
+    import type { CallTreeNode, FunctionId, SampleSourceInfo } from "../utilities/types";
 
     import FunctionTableRow from "./FunctionTableRow.svelte";
 
     export let processKey: number;
+    export let hotSourceIndex: number|null;
     export let node: CallTreeNode;
     export let level: number;
     export let activeFunction: FunctionId;
+    export let sampleSources : SampleSourceInfo[];
 
     const dispatch = createEventDispatcher();
 
@@ -18,9 +20,9 @@
 
     let expanded: boolean|null = null;
 
-    $: if (node !== null && node.children !== null) {
+    $: if (node !== null && node.children !== null && hotSourceIndex !== null) {
         node.children.sort((a, b) => {
-            return -(a.totalSamples - b.totalSamples);
+            return -(a.hits[hotSourceIndex].totalSamples - b.hits[hotSourceIndex].totalSamples);
         });
         if(expanded === null) {
           expanded = node.isHot;
@@ -40,6 +42,7 @@
         if (expanded && node.children === null) {
             vscode.postMessage({
                 command: "expandCallTreeNode",
+                hotSourceId: hotSourceIndex !== null ? sampleSources[hotSourceIndex].id : null,
                 processKey: processKey,
                 nodeId: node.id,
             });
@@ -65,9 +68,11 @@
         if (node === null) return;
         if (event.data.type !== "callTreeNodeChildren") return;
         if (event.data.data["id"] !== node.id) return;
-        event.data.data["children"].sort((a, b) => {
-            return -(a.totalSamples - b.totalSamples);
-        });
+        if(hotSourceIndex !== null) {
+          event.data.data["children"].sort((a, b) => {
+              return -(a.hits[hotSourceIndex].totalSamples - b.hits[hotSourceIndex].totalSamples);
+          });
+        }
         node.children = event.data.data["children"];
     });
 </script>
@@ -75,8 +80,10 @@
 <FunctionTableRow
     on:navigate={(event) => navigateToSelf()}
     func={node}
-    {isHot}
-    {isActive}
+    isHot={isHot}
+    isActive={isActive}
+    sampleSources={sampleSources}
+    showAllSelfColumns={false}
 >
     <span slot="function-name-prefix" class="function-name-prefix">
         <div
@@ -98,6 +105,8 @@
                     navigateToChild(event.detail.functionId)}
                 {processKey}
                 node={child}
+                sampleSources={sampleSources}
+                hotSourceIndex={hotSourceIndex}
                 level={level + 1}
                 {activeFunction}
             />
@@ -107,6 +116,8 @@
         <svelte:self
             {processKey}
             node={null}
+            sampleSources={sampleSources}
+            hotSourceIndex={hotSourceIndex}
             level={level + 1}
         />
     {/if}

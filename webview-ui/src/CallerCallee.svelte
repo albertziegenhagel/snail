@@ -5,20 +5,10 @@
   import type { CallerCalleeNode, FunctionNode } from "./utilities/types";
 
   export let node: CallerCalleeNode = null;
+  export let activeSourceIndex: number = null;
 
   const dispatch = createEventDispatcher();
 
-  // let currentFunction: Function = null;
-  // let callers: Function[] = [];
-  // let callees: Function[] = [];
-
-  // $: if (activeFunction !== null && activeFunction.processKey !== null && activeFunction.functionId !== null) {
-  //   vscode.postMessage({
-  //     command: "retrieveCallersCallees",
-  //     processKey: activeFunction.processKey,
-  //     functionId: activeFunction.functionId,
-  //   });
-  // }
 
   function navigateTo(func: FunctionNode) {
     dispatch("navigate", {
@@ -27,20 +17,8 @@
         functionId: func.id,
       },
     });
-    // currentFunctionId = func.id;
   }
 
-  // window.addEventListener("message", (event) => {
-  //   // if (currentFunctionId === null && event.data.type === "functionsPage" && event.data.data["pageIndex"] === 0) {
-  //   //   currentFunctionId = event.data.data["functions"][0].id;
-  //   // }
-  //   if (event.data.type === "callersCallees") {
-  //     if(event.data.data["function"]['id'] !== activeFunction?.functionId) return;
-  //     currentFunction = event.data.data["function"];
-  //     callers = event.data.data["callers"];
-  //     callees = event.data.data["callees"];
-  //   }
-  // });
 </script>
 
 {#if node !== null}
@@ -78,17 +56,19 @@
                 navigateTo(func);
               }}
               class="caller-callee-node-group-entry callee"
-              style="flex: {func.totalSamples} 0 0;"
+              style="flex: {activeSourceIndex !== null ? func.hits[activeSourceIndex].totalSamples : 1} 0 0;"
             >
               <span class="function-name" title={func.name}>{func.name}</span>
-              <span class="samples" title="{func.totalSamples} total samples"
-                >{func.totalSamples}</span
-              >
-              <span
-                class="percent"
-                title="{func.totalPercent.toFixed(2)}% of total samples"
-                >({func.totalPercent.toFixed(2)}%)</span
-              >
+              {#if activeSourceIndex !== null}
+                <span class="samples" title="{func.hits[activeSourceIndex].totalSamples} total samples"
+                  >{func.hits[activeSourceIndex].totalSamples}</span
+                >
+                <span
+                  class="percent"
+                  title="{func.hits[activeSourceIndex].totalPercent.toFixed(2)}% of total samples"
+                  >({func.hits[activeSourceIndex].totalPercent.toFixed(2)}%)</span
+                >
+              {/if}
             </div>
           {/each}
         {/if}
@@ -108,38 +88,41 @@
       {#if node !== null}
         <div
           class="caller-callee-node-group-entry current-total"
-          style="flex: {node.function.totalSamples -
-            node.function.selfSamples} 0 0;"
+          style="flex: {activeSourceIndex !== null ? (node.function.hits[activeSourceIndex].totalSamples - node.function.hits[activeSourceIndex].selfSamples) : 1} 0 0;"
         >
           <span class="function-name" title={node.function.name}
             >{node.function.name}</span
           >
-          <span
-            class="samples"
-            title="{node.function.totalSamples} total samples"
-            >{node.function.totalSamples}</span
-          >
-          <span
-            class="percent"
-            title="{node.function.totalPercent.toFixed(2)}% of total samples"
-            >({node.function.totalPercent.toFixed(2)}%)</span
-          >
+          {#if activeSourceIndex !== null}
+            <span
+              class="samples"
+              title="{node.function.hits[activeSourceIndex].totalSamples} total samples"
+              >{node.function.hits[activeSourceIndex].totalSamples}</span
+            >
+            <span
+              class="percent"
+              title="{node.function.hits[activeSourceIndex].totalPercent.toFixed(2)}% of total samples"
+              >({node.function.hits[activeSourceIndex].totalPercent.toFixed(2)}%)</span
+            >
+          {/if}
         </div>
         <div
           class="caller-callee-node-group-entry current-self"
-          style="flex: {node.function.selfSamples} 0 0;"
+          style="flex: {activeSourceIndex !== null ? node.function.hits[activeSourceIndex].selfSamples : 1} 0 0;"
         >
           <span class="function-name">Function Body</span>
-          <span
-            class="samples"
-            title="{node.function.selfSamples} self samples"
-            >{node.function.selfSamples}</span
-          >
-          <span
-            class="percent"
-            title="{node.function.selfPercent.toFixed(2)}% of total samples"
-            >({node.function.selfPercent.toFixed(2)}%)</span
-          >
+            {#if activeSourceIndex !== null}
+            <span
+              class="samples"
+              title="{node.function.hits[activeSourceIndex].selfSamples} self samples"
+              >{node.function.hits[activeSourceIndex].selfSamples}</span
+            >
+            <span
+              class="percent"
+              title="{node.function.hits[activeSourceIndex].selfPercent.toFixed(2)}% of total samples"
+              >({node.function.hits[activeSourceIndex].selfPercent.toFixed(2)}%)</span
+            >
+          {/if}
         </div>
       {:else}
         <div class="caller-callee-node-group-entry current-total">
@@ -172,17 +155,19 @@
                 navigateTo(func);
               }}
               class="caller-callee-node-group-entry caller"
-              style="flex: {func.totalSamples} 0 0;"
+              style="flex: {activeSourceIndex !== null ? func.hits[activeSourceIndex].totalSamples : 1} 0 0;"
             >
               <span class="function-name" title={func.name}>{func.name}</span>
-              <span class="samples" title="{func.totalSamples} total samples"
-                >{func.totalSamples}</span
-              >
-              <span
-                class="percent"
-                title="{func.totalPercent.toFixed(2)}% of total samples"
-                >({func.totalPercent.toFixed(2)}%)</span
-              >
+              {#if activeSourceIndex !== null}
+                <span class="samples" title="{func.hits[activeSourceIndex].totalSamples} total samples"
+                  >{func.hits[activeSourceIndex].totalSamples}</span
+                >
+                <span
+                  class="percent"
+                  title="{func.hits[activeSourceIndex].totalPercent.toFixed(2)}% of total samples"
+                  >({func.hits[activeSourceIndex].totalPercent.toFixed(2)}%)</span
+                >
+              {/if}
             </div>
           {/each}
         {/if}

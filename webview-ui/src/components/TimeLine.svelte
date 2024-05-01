@@ -9,7 +9,7 @@
 
   export let processes: ProcessInfo[] = null;
 
-  export let activeFunction: FunctionId = null;
+  // export let activeFunction: FunctionId = null;
 
   export let activeSelectionFilter: TimeSpan = null;
 

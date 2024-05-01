@@ -137,7 +137,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveHottestFunctions":
-                        client.retrieveHottestFunctions(document.documentId).then(
+                        client.retrieveHottestFunctions(document.documentId, message.sourceId).then(
                             (functions) => {
                                 webview.postMessage({
                                     "type": "hottestFunctions",
@@ -151,7 +151,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveCallTreeHotPath":
-                        client.retrieveCallTreeHotPath(document.documentId, message.processKey).then(
+                        client.retrieveCallTreeHotPath(document.documentId, message.sourceId, message.processKey).then(
                             (root) => {
                                 webview.postMessage({
                                     "type": "callTreeHotPath",
@@ -166,11 +166,12 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveFunctionsPage":
-                        client.retrieveFunctionsPage(document.documentId, message.processKey, message.pageSize, message.pageIndex).then(
+                        client.retrieveFunctionsPage(document.documentId, message.sortBy, message.sortOrder, message.sortSourceId, message.processKey, message.pageSize, message.pageIndex).then(
                             (functions) => {
                                 webview.postMessage({
                                     "type": "functionsPage",
                                     "data": {
+                                        "processKey": message.processKey,
                                         "pageSize": message.pageSize,
                                         "pageIndex": message.pageIndex,
                                         "functions": functions,
@@ -182,7 +183,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "expandCallTreeNode":
-                        client.expandCallTreeNode(document.documentId, message.processKey, message.nodeId).then(
+                        client.expandCallTreeNode(document.documentId, message.hotSourceId, message.processKey, message.nodeId).then(
                             (children) => {
                                 webview.postMessage({
                                     "type": "callTreeNodeChildren",
@@ -197,7 +198,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "retrieveCallersCallees":
-                        client.retrieveCallersCallees(document.documentId, message.processKey, message.functionId).then(
+                        client.retrieveCallersCallees(document.documentId, message.sortSourceId, message.processKey, message.functionId).then(
                             (result) => {
                                 webview.postMessage({
                                     "type": "callersCallees",
@@ -238,13 +239,25 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             }
                         );
                         return;
+                    case "retrieveSampleSources":
+                        client.retrieveSampleSources(document.documentId).then(
+                            (sampleSources) => {
+                                webview.postMessage({
+                                    "type": "sampleSources",
+                                    "data": sampleSources
+                                });
+                            },
+                            (reason) => {
+                                vscode.window.showErrorMessage(`Failed to retrieve sample sources: ${reason}`);
+                            });
+                        return;
                     case "navigateToFunction":
                         client.retrieveLineInfo(document.documentId, message.processKey, message.functionId).then(
                             (result) => {
                                 if (result === undefined) {
                                     return;
                                 }
-                                this.navigateTo(result);
+                                this.navigateTo(result, message.sampleSources, message.sourceIndex);
                             },
                             (reason) => {
                                 vscode.window.showErrorMessage(`Failed to retrieve line info: ${reason}`);
@@ -271,7 +284,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
         this.currentlyDecoratedEditor = undefined;
     }
 
-    async navigateTo(functionHits: protocol.RetrieveLineInfoResult|null) {
+    async navigateTo(functionHits: protocol.RetrieveLineInfoResult|null, sampleSources: protocol.SampleSourceInfo[]|null, sampleSourceIndex: number|null) {
         if (functionHits === null) {
             this.clearDecorations();
             return;
@@ -297,6 +310,18 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
 
         let maxChars = 1;
 
+        if(sampleSourceIndex === null) {
+            sampleSourceIndex = 0;
+        }
+
+        const useTotalSamples = sampleSources !== null && sampleSourceIndex < sampleSources.length ?
+            sampleSources[sampleSourceIndex].hasStacks : false;
+
+        const functionSamples = (sampleSourceIndex < functionHits.hits.length) ?
+            (useTotalSamples ?
+                functionHits.hits[sampleSourceIndex].totalSamples :
+                functionHits.hits[sampleSourceIndex].selfSamples) : 0;
+
         let lastLine: number = 0;
         for (const lineInfo of functionHits.lineHits) {
             for (let line = lastLine; line < lineInfo.lineNumber; line++) {
@@ -310,7 +335,12 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                 });
             }
 
-            const text = `${lineInfo.totalSamples}`;
+            const lineSamples = (sampleSourceIndex < lineInfo.hits.length) ?
+                (useTotalSamples ?
+                    lineInfo.hits[sampleSourceIndex].totalSamples :
+                    lineInfo.hits[sampleSourceIndex].selfSamples) : 0;
+
+            const text = `${lineSamples}`;
             maxChars = Math.max(maxChars, text.length);
 
             gutterDecorations.push({
@@ -321,7 +351,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                     }
                 },
             });
-            const index = Math.min(Math.trunc((lineInfo.totalSamples / functionHits.totalSamples) * hitDecorations.length), hitDecorations.length - 1);
+            const index = Math.min(Math.trunc((lineSamples / functionSamples) * hitDecorations.length), hitDecorations.length - 1);
             hitDecorations[index].push(
                 new vscode.Range(lineInfo.lineNumber, 0, lineInfo.lineNumber, 0),
             );

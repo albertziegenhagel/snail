@@ -2,9 +2,9 @@
 
 [![Build & Test](https://github.com/albertziegenhagel/snail/actions/workflows/ci.yml/badge.svg)](https://github.com/albertziegenhagel/snail/actions/workflows/ci.yml)
 
-Snail is an extension for [Visual Studio Code](https://code.visualstudio.com) to read and visualize results of a profiler run. It supports reading `perf.data` files written by the Linux tool [perf](https://perf.wiki.kernel.org/index.php/Main_Page) as well as `*.diagsession` files written by the Visual Studio tool [VSDiagnostics](https://learn.microsoft.com/en-us/visualstudio/profiling/profile-apps-from-command-line?view=vs-2022).
+Snail is an extension for [Visual Studio Code](https://code.visualstudio.com) to read and visualize results from a sampling profiler. It supports reading `perf.data` files written by the Linux tool [perf](https://perf.wiki.kernel.org/index.php/Main_Page), `*.diagsession` files written by the Visual Studio tool [VSDiagnostics](https://learn.microsoft.com/en-us/visualstudio/profiling/profile-apps-from-command-line?view=vs-2022) or `*.etl` files written by Windows tools like [XPerf](https://learn.microsoft.com/en-us/windows-hardware/test/wpt/xperf-command-line-reference) or the [Windows Performance Recorder (WPR)](https://learn.microsoft.com/en-us/windows-hardware/test/wpt/windows-performance-recorder).
 
-> This tool is in a **very early alpha** status. Hence it is barely usable by anyone except it's original author.
+> IMPORTANT: This extension is in a **very early alpha** state. Hence it is barely usable by anyone except it's original author.
 
 <!-- ## Features
 
