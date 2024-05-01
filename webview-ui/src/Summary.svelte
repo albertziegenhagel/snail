@@ -10,12 +10,15 @@
         ProcessFunction,
         ProcessInfo,
         TimeSpan,
+        SampleSourceInfo,
     } from "./utilities/types";
 
     export let processes: ProcessInfo[] = null;
     export let totalTime: TimeSpan = null;
+    export let sampleSources: SampleSourceInfo[];
     export let sessionInfo = null;
     export let systemInfo = null;
+    export let sourceInfo = null;
 
     export let hotFunctions: ProcessFunction[] = null;
     export let activeFunction: FunctionId;
@@ -119,7 +122,6 @@
           bind:selection={activeSelection}
           {displayTime}
           {processes}
-          {activeFunction}
           {activeSelectionFilter}
           bind:uncheckedProcesses={excludedProcesses}
           bind:uncheckedThreads={excludedThreads}
@@ -150,7 +152,7 @@
         </div>
     </Pane>
     <Pane title="Hot spots">
-        <FunctionTable>
+        <FunctionTable sampleSources={sampleSources}>
             {#if hotFunctions !== null}
                 {#each hotFunctions as func}
                     <FunctionTableRow
@@ -163,6 +165,7 @@
                             })}
                         func={func.function}
                         isHot={true}
+                        sampleSources={sampleSources}
                         isActive={func.processKey ==
                             activeFunction?.processKey &&
                             func.function.id == activeFunction?.functionId}
@@ -170,15 +173,18 @@
                 {/each}
             {:else}
                 <!-- Placeholders -->
-                <FunctionTableRow func={null} isHot={true} />
-                <FunctionTableRow func={null} isHot={true} />
-                <FunctionTableRow func={null} isHot={true} />
-                <FunctionTableRow func={null} isHot={true} />
+                <FunctionTableRow func={null} isHot={true} sampleSources={sampleSources}/>
+                <FunctionTableRow func={null} isHot={true} sampleSources={sampleSources}/>
+                <FunctionTableRow func={null} isHot={true} sampleSources={sampleSources}/>
+                <FunctionTableRow func={null} isHot={true} sampleSources={sampleSources}/>
             {/if}
         </FunctionTable>
     </Pane>
     <Pane title="Session Info">
         <InfoTable entries={sessionInfo} />
+    </Pane>
+    <Pane title="Sample Sources">
+        <InfoTable entries={sourceInfo} />
     </Pane>
     <Pane title="System Info">
         <InfoTable entries={systemInfo} />

@@ -23,26 +23,36 @@ export interface ProcessInfo {
     threads: ThreadInfo[];
 }
 
+export interface HitCounts {
+    sourceId: number;
+    totalSamples: number;
+    selfSamples: number;
+    totalPercent: number;
+    selfPercent: number;
+}
+
 export interface FunctionNode {
     id: number;
     name: string;
     module: string;
     type: string;
-    totalSamples: number;
-    selfSamples: number;
-    totalPercent: number;
-    selfPercent: number;
+    hits: HitCounts[];
 };
+
+export interface SampleSourceInfo {
+    id: number;
+    name: string;
+    numberOfSamples: number;
+    averageSamplingRate: number;
+    hasStacks: boolean;
+}
 
 export interface CallTreeNode {
     name: string;
     id: number;
     functionId: number;
     module: string;
-    totalSamples: number;
-    selfSamples: number;
-    totalPercent: number;
-    selfPercent: number;
+    hits: HitCounts[];
     type: string;
     children: CallTreeNode[];
     isHot: boolean;
@@ -63,4 +73,9 @@ export interface FunctionId {
 export interface ProcessFunction {
     processKey: number;
     function : FunctionNode;
+};
+
+export interface ProcessFunctions {
+    processKey: number;
+    functions : FunctionNode[];
 };

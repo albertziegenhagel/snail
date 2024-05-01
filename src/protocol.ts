@@ -8,6 +8,29 @@ export enum ModuleFilterMode {
     onlyIncluded = "only_included",
 }
 
+export enum FunctionsSortBy {
+    name = "name",
+    selfSamples = "self_samples",
+    totalSamples = "total_samples",
+}
+
+export enum SortDirection {
+    ascending = "ascending",
+    descending = "descending",
+}
+
+export interface SampleSourceInfo {
+    id: number;
+
+    name: string;
+
+    numberOfSamples: number;
+
+    averageSamplingRate: number;
+
+    hasStacks: boolean;
+}
+
 export interface ThreadInfo {
     key: number;
 
@@ -51,8 +74,6 @@ export interface SessionInfo {
     numberOfThreads: number;
 
     numberOfSamples: number;
-
-    averageSamplingRate: number;
 }
 
 export interface SystemInfo {
@@ -67,6 +88,18 @@ export interface SystemInfo {
     numberOfProcessors: number;
 }
 
+export interface HitCounts {
+    sourceId: number;
+
+    totalSamples: number;
+
+    selfSamples: number;
+
+    totalPercent: number;
+
+    selfPercent: number;
+}
+
 export interface CallTreeNode {
     name: string;
 
@@ -78,13 +111,7 @@ export interface CallTreeNode {
 
     type: string;
 
-    totalSamples: number;
-
-    selfSamples: number;
-
-    totalPercent: number;
-
-    selfPercent: number;
+    hits: HitCounts[];
 
     isHot: boolean;
 
@@ -100,13 +127,7 @@ export interface FunctionNode {
 
     type: string;
 
-    totalSamples: number;
-
-    selfSamples: number;
-
-    totalPercent: number;
-
-    selfPercent: number;
+    hits: HitCounts[];
 }
 
 export interface ProcessFunction {
@@ -118,13 +139,7 @@ export interface ProcessFunction {
 export interface LineHits {
     lineNumber: number;
 
-    totalSamples: number;
-
-    selfSamples: number;
-
-    totalPercent: number;
-
-    selfPercent: number;
+    hits: HitCounts[];
 }
 
 export interface InitializeParams {
@@ -142,10 +157,20 @@ export interface ReadDocumentResult {
     documentId: number;
 }
 
+export interface RetrieveSampleSourcesParams {
+    // The id of the document to perform the operation on.
+    // This should be an id that resulted from a call to `readDocument`.
+    documentId: number;
+}
+
 export interface RetrieveSessionInfoParams {
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
     documentId: number;
+}
+
+export interface RetrieveSampleSourcesResult {
+    sampleSources: SampleSourceInfo[];
 }
 
 export interface RetrieveSessionInfoResult {
@@ -175,6 +200,8 @@ export interface RetrieveProcessesResult {
 export interface RetrieveHottestFunctionsParams {
     count: number;
 
+    sourceId: number;
+
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
     documentId: number;
@@ -185,6 +212,8 @@ export interface RetrieveHottestFunctionsResult {
 }
 
 export interface RetrieveCallTreeHotPathParams {
+    sourceId: number;
+
     processKey: number;
 
     // The id of the document to perform the operation on.
@@ -197,6 +226,10 @@ export interface RetrieveCallTreeHotPathResult {
 }
 
 export interface RetrieveFunctionsPageParams {
+    sortBy: FunctionsSortBy;
+
+    sortOrder: SortDirection;
+
     pageSize: number;
 
     pageIndex: number;
@@ -206,6 +239,8 @@ export interface RetrieveFunctionsPageParams {
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
     documentId: number;
+
+    sortSourceId: number | null;
 }
 
 export interface RetrieveFunctionsPageResult {
@@ -220,6 +255,8 @@ export interface ExpandCallTreeNodeParams {
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
     documentId: number;
+
+    hotSourceId: number | null;
 }
 
 export interface ExpandCallTreeNodeResult {
@@ -227,6 +264,8 @@ export interface ExpandCallTreeNodeResult {
 }
 
 export interface RetrieveCallersCalleesParams {
+    sortSourceId: number;
+
     maxEntries: number;
 
     functionId: number;
@@ -261,13 +300,7 @@ export interface RetrieveLineInfoResult {
 
     lineNumber: number;
 
-    totalSamples: number;
-
-    selfSamples: number;
-
-    totalPercent: number;
-
-    selfPercent: number;
+    hits: HitCounts[];
 
     lineHits: LineHits[];
 }
@@ -336,6 +369,9 @@ export const shutdownRequestType = new rpc.RequestType<void, null, void>('shutdo
 
 
 export const readDocumentRequestType = new rpc.RequestType<ReadDocumentParams, ReadDocumentResult, void>('readDocument');
+
+
+export const retrieveSampleSourcesRequestType = new rpc.RequestType<RetrieveSampleSourcesParams, RetrieveSampleSourcesResult, void>('retrieveSampleSources');
 
 
 export const retrieveSessionInfoRequestType = new rpc.RequestType<RetrieveSessionInfoParams, RetrieveSessionInfoResult, void>('retrieveSessionInfo');

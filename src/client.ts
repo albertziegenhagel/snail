@@ -322,7 +322,7 @@ export class Client {
 		return result;
 	}
 
-	public async retrieveHottestFunctions(documentId: number, count: number = 4): Promise<protocol.ProcessFunction[]> {
+	public async retrieveHottestFunctions(documentId: number, sourceId: number, count: number = 4): Promise<protocol.ProcessFunction[]> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.ProcessFunction[]>("Client is not connected");
@@ -331,13 +331,14 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.retrieveHottestFunctionsRequestType, {
 			documentId: documentId,
+			sourceId: sourceId,
 			count: count
 		});
 
 		return result.then((data) => { return data.functions; });
 	}
 
-	public async retrieveCallTreeHotPath(documentId: number, processKey: number): Promise<protocol.CallTreeNode> {
+	public async retrieveCallTreeHotPath(documentId: number, sourceId: number, processKey: number): Promise<protocol.CallTreeNode> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.CallTreeNode>("Client is not connected");
@@ -345,6 +346,7 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.retrieveCallTreeHotPathRequestType, {
 			documentId: documentId,
+			sourceId: sourceId,
 			processKey: processKey
 		});
 
@@ -352,7 +354,7 @@ export class Client {
 	}
 
 
-	public async retrieveFunctionsPage(documentId: number, processKey: number,
+	public async retrieveFunctionsPage(documentId: number, sortBy : protocol.FunctionsSortBy, sortOrder : protocol.SortDirection, sortSourceId: number|null, processKey: number,
 		pageSize: number, pageIndex: number): Promise<protocol.FunctionNode[]> {
 		await this._started;
 		if (this._connection === undefined) {
@@ -361,6 +363,9 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.retrieveFunctionsPageRequestType, {
 			documentId: documentId,
+			sortBy: sortBy,
+			sortOrder : sortOrder,
+			sortSourceId: sortSourceId,
 			processKey: processKey,
 			pageSize: pageSize,
 			pageIndex: pageIndex
@@ -369,7 +374,7 @@ export class Client {
 		return result.then((data) => { return data.functions; });
 	}
 
-	public async expandCallTreeNode(documentId: number, processKey: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
+	public async expandCallTreeNode(documentId: number, hotSourceId: number|null, processKey: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.CallTreeNode[]>("Client is not connected");
@@ -377,6 +382,7 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.expandCallTreeNodeRequestType, {
 			documentId: documentId,
+			hotSourceId: hotSourceId,
 			processKey: processKey,
 			nodeId: nodeId
 		});
@@ -385,7 +391,7 @@ export class Client {
 	}
 
 
-	public async retrieveCallersCallees(documentId: number, processKey: number, functionId: number, maxEntries: number = 6): Promise<protocol.RetrieveCallersCalleesResult> {
+	public async retrieveCallersCallees(documentId: number, sortSourceId: number, processKey: number, functionId: number, maxEntries: number = 6): Promise<protocol.RetrieveCallersCalleesResult> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.RetrieveCallersCalleesResult>("Client is not connected");
@@ -393,6 +399,7 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.retrieveCallersCalleesRequestType, {
 			documentId: documentId,
+			sortSourceId: sortSourceId,
 			processKey: processKey,
 			functionId: functionId,
 			maxEntries: maxEntries
@@ -423,6 +430,16 @@ export class Client {
 		return result.then((data) => { return data.systemInfo; });
 	}
 
+	public async retrieveSampleSources(documentId: number): Promise<protocol.SampleSourceInfo[]> {
+		await this._started;
+		if (this._connection === undefined) {
+			return Promise.reject<protocol.SampleSourceInfo[]>("Client is not connected");
+		}
+
+		const result =  this._connection.sendRequest(protocol.retrieveSampleSourcesRequestType, { documentId: documentId });
+		
+		return result.then((data) => { return data.sampleSources; });
+	}
 
 	public async retrieveLineInfo(documentId: number, processKey: number, functionId: number): Promise<protocol.RetrieveLineInfoResult|null> {
 		await this._started;

@@ -1,14 +1,22 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import { getModuleDisplayName } from "../utilities/path";
-    import type { FunctionNode } from "../utilities/types";
+    import type { FunctionNode, SampleSourceInfo } from "../utilities/types";
     import Placeholder from "./Placeholder.svelte";
 
     export let func: FunctionNode;
     export let isHot: boolean = false;
     export let isActive: boolean = false;
+    export let showAllSelfColumns : boolean = true;
+    export let sampleSources: SampleSourceInfo[];
 
     const dispatch = createEventDispatcher();
+
+    function navigateToSelf() {
+        dispatch("navigate", {
+            functionId: func.id,
+        });
+    }
 </script>
 
 <tr class:active={isActive}>
@@ -20,12 +28,8 @@
             {/if}
             {#if func !== null}
                 <span
-                    on:click={() => {
-                        dispatch("navigate");
-                    }}
-                    on:keypress={() => {
-                        dispatch("navigate");
-                    }}
+                    on:click={() => navigateToSelf()}
+                    on:keypress={() => navigateToSelf()}
                     class="function-name-text clickable"
                     title={func.name}>{func.name}</span
                 >
@@ -34,32 +38,38 @@
             {/if}
         </div>
     </td>
-    <td>
-        <div class="total-samples">
-            <slot name="total-samples-prefix" />
-            {#if func !== null}
-                <span class="total-samples-text"
-                    >{func.totalSamples} ({func.totalPercent.toFixed(
-                        2
-                    )}%)</span
-                >
-            {:else}
-                <Placeholder />
-            {/if}
-        </div>
-    </td>
-    <td>
-        <div class="self-samples">
-            <slot name="self-samples-prefix" />
-            {#if func !== null}
-                <span class="self-samples-text"
-                    >{func.selfSamples} ({func.selfPercent.toFixed(2)}%)</span
-                >
-            {:else}
-                <Placeholder />
-            {/if}
-        </div>
-    </td>
+    {#each sampleSources as source, sourceIndex}
+      {#if source.hasStacks}
+        <td>
+            <div class="total-samples">
+                <slot name="total-samples-prefix" />
+                {#if func !== null}
+                    <span class="total-samples-text"
+                        >{func.hits[sourceIndex].totalSamples} ({func.hits[sourceIndex].totalPercent.toFixed(
+                            2
+                        )}%)</span
+                    >
+                {:else}
+                    <Placeholder />
+                {/if}
+            </div>
+        </td>
+      {/if}
+      {#if source.hasStacks || showAllSelfColumns}
+        <td>
+            <div class="self-samples">
+                <slot name="self-samples-prefix" />
+                {#if func !== null}
+                    <span class="self-samples-text"
+                        >{func.hits[sourceIndex].selfSamples} ({func.hits[sourceIndex].selfPercent.toFixed(2)}%)</span
+                    >
+                {:else}
+                    <Placeholder />
+                {/if}
+            </div>
+        </td>
+      {/if}
+    {/each}
     <td>
         <div class="modules">
             <slot name="modules-prefix" />
