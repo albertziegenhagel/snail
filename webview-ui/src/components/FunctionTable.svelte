@@ -2,19 +2,18 @@
   import { createEventDispatcher } from "svelte";
 
   import type { SampleSourceInfo } from "../utilities/types";
-  export let stickyHeader : boolean = false;
-  export let showAllSelfColumns : boolean = true;
-  export let sampleSources : SampleSourceInfo[];
+  export let stickyHeader: boolean = false;
+  export let showAllSelfColumns: boolean = true;
+  export let sampleSources: SampleSourceInfo[];
 
-  export let sortBy: string|null = null;
-  export let sortOrder: string|null = null;
-  export let sortSourceId: number|null = null;
+  export let sortBy: string | null = null;
+  export let sortOrder: string | null = null;
+  export let sortSourceId: number | null = null;
 
-  function onHeader(header:string, sourceId:number|null) {
-
+  function onHeader(header: string, sourceId: number | null) {
     dispatch("toggle", {
       header: header,
-      sourceId: sourceId
+      sourceId: sourceId,
     });
   }
 
@@ -23,44 +22,68 @@
 
 <table>
   <colgroup>
-    <col class="function-column"/>
+    <col class="function-column" />
     {#each sampleSources as source}
       {#if source.hasStacks}
-        <col class="total-samples-column"/>
+        <col class="total-samples-column" />
       {/if}
       {#if source.hasStacks || showAllSelfColumns}
-        <col class="self-samples-column"/>
+        <col class="self-samples-column" />
       {/if}
     {/each}
-    <col class="module-column"/>
+    <col class="module-column" />
   </colgroup>
   <thead class:sticky={stickyHeader}>
     <tr>
-      <td on:keypress={() => onHeader('name', null)} on:click={() => onHeader('name', null)}>
+      <td
+        on:keypress={() => onHeader("name", null)}
+        on:click={() => onHeader("name", null)}
+      >
         <div class="function-head">
           <span>Function Name</span>
-          {#if sortBy === 'name'}
-          <span class="order-indicator codicon codicon-triangle-{sortOrder === 'ascending' ? 'up' : 'down'}"/>
+          {#if sortBy === "name"}
+            <span
+              class="order-indicator codicon codicon-triangle-{sortOrder ===
+              'ascending'
+                ? 'up'
+                : 'down'}"
+            />
           {/if}
         </div>
       </td>
       {#each sampleSources as source}
         {#if source.hasStacks}
-          <td  on:keypress={() => onHeader('total_samples', source.id)} on:click={() => onHeader('total_samples', source.id)}>
+          <td
+            on:keypress={() => onHeader("total_samples", source.id)}
+            on:click={() => onHeader("total_samples", source.id)}
+          >
             <div class="total-samples-head">
               <span>{source.name} (total)</span>
-              {#if sortBy === 'total_samples' && sortSourceId === source.id}
-              <span class="order-indicator codicon codicon-triangle-{sortOrder === 'ascending' ? 'up' : 'down'}"/>
+              {#if sortBy === "total_samples" && sortSourceId === source.id}
+                <span
+                  class="order-indicator codicon codicon-triangle-{sortOrder ===
+                  'ascending'
+                    ? 'up'
+                    : 'down'}"
+                />
               {/if}
             </div>
           </td>
         {/if}
         {#if source.hasStacks || showAllSelfColumns}
-          <td  on:keypress={() => onHeader('self_samples', source.id)} on:click={() => onHeader('self_samples', source.id)}>
+          <td
+            on:keypress={() => onHeader("self_samples", source.id)}
+            on:click={() => onHeader("self_samples", source.id)}
+          >
             <div class="self-samples-head">
               <span>{source.name} (self)</span>
-              {#if sortBy === 'self_samples' && sortSourceId === source.id}
-              <span class="order-indicator codicon codicon-triangle-{sortOrder === 'ascending' ? 'up' : 'down'}"/>
+              {#if sortBy === "self_samples" && sortSourceId === source.id}
+                <span
+                  class="order-indicator codicon codicon-triangle-{sortOrder ===
+                  'ascending'
+                    ? 'up'
+                    : 'down'}"
+                />
               {/if}
             </div>
           </td>
@@ -75,7 +98,7 @@
     <slot></slot>
   </tbody>
 </table>
-  
+
 <style>
   table {
     border-collapse: collapse;

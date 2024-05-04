@@ -33,7 +33,7 @@ export class Client {
 		return this._outputChannel;
 	}
 
-	constructor(extensionPath : string) {
+	constructor(extensionPath: string) {
 		this._extensionPath = extensionPath;
 		this._clientState = ClientState.stopped;
 	}
@@ -41,34 +41,34 @@ export class Client {
 	private async _handleError(error: Error, message: rpc.Message | undefined, count: number | undefined) {
 		vscode.window.showErrorMessage(`Snail JSON RPC error: ${error.message}`);
 	}
-	
+
 	private async _handleClosed() {
-		if(this._clientState === ClientState.running) {
+		if (this._clientState === ClientState.running) {
 			vscode.window.showErrorMessage("Snail server closed connection unexpectedly. Restarting...");
 			this._connection?.end();
 			this.start();
 		}
 	}
 
-	private _getServerExecutablePath() : string {
-		const executableConfig : string | undefined = vscode.workspace.getConfiguration("snail")?.get("server.executable");
-		if(executableConfig && executableConfig.length > 0) {
+	private _getServerExecutablePath(): string {
+		const executableConfig: string | undefined = vscode.workspace.getConfiguration("snail")?.get("server.executable");
+		if (executableConfig && executableConfig.length > 0) {
 			return executableConfig;
 		}
 		let serverExecutableName = 'snail-server';
-		if(process.platform === 'win32') {
+		if (process.platform === 'win32') {
 			serverExecutableName += ".exe";
 		}
 		return path.resolve(this._extensionPath, 'server', 'bin', serverExecutableName);
 	}
 
-	private _getServerCwd() : string | undefined {
+	private _getServerCwd(): string | undefined {
 		const folders = vscode.workspace.workspaceFolders;
-		if(!folders || folders.length === 0) {
+		if (!folders || folders.length === 0) {
 			return undefined;
 		}
 		const firstFolder = folders[0];
-		if(firstFolder.uri.scheme === 'file') {
+		if (firstFolder.uri.scheme === 'file') {
 			return firstFolder.uri.fsPath;
 		}
 		return undefined;
@@ -87,12 +87,12 @@ export class Client {
 		serverArgs.push(pipeName);
 
 		const debugServer = vscode.workspace.getConfiguration("snail")?.get("server.debug");
-		if(debugServer) {
+		if (debugServer) {
 			serverArgs.push("--debug");
 		}
 
 		const pipeTransport = await rpc.createClientPipeTransport(pipeName);
-		
+
 		const serverProcess = cp.spawn(serverPath, serverArgs, serverExecOptions);
 		if (!serverProcess || !serverProcess.pid) {
 			return Promise.reject<rpc.MessageConnection>(`Could not start server: '${serverPath}'`);
@@ -116,7 +116,7 @@ export class Client {
 		}
 
 		const configuration = vscode.workspace.getConfiguration("snail");
-		if(configuration === null || configuration === undefined) {
+		if (configuration === null || configuration === undefined) {
 			return;
 		}
 
@@ -126,10 +126,10 @@ export class Client {
 		const pdbNoDefaultServerUrls = configuration.get<boolean>("pdbSymbols.noDefaultServerUrls", false);
 
 		this._connection.sendNotification(protocol.setPdbSymbolFindOptionsNotificationType, {
-			searchDirs : pdbSearchDirs,
-			symbolCacheDir : pdbCacheDir.length > 0 ? pdbCacheDir : null,
-			noDefaultUrls : pdbNoDefaultServerUrls,
-			symbolServerUrls : pdbServerUrls
+			searchDirs: pdbSearchDirs,
+			symbolCacheDir: pdbCacheDir.length > 0 ? pdbCacheDir : null,
+			noDefaultUrls: pdbNoDefaultServerUrls,
+			symbolServerUrls: pdbServerUrls
 		});
 	}
 
@@ -139,7 +139,7 @@ export class Client {
 		}
 
 		const configuration = vscode.workspace.getConfiguration("snail");
-		if(configuration === null || configuration === undefined) {
+		if (configuration === null || configuration === undefined) {
 			return;
 		}
 
@@ -147,33 +147,33 @@ export class Client {
 		configuration.get("dwarfDebugInfo.cacheDir");
 		configuration.get("dwarfDebugInfo.debuginfodUrls");
 		configuration.get("dwarfDebugInfo.noDefaultDebuginfodUrls");
-		
+
 		const dwarfSearchDirs = configuration.get<string[]>("dwarfDebugInfo.searchDirs", []);
 		const dwarfCacheDir = configuration.get<string>("dwarfDebugInfo.cacheDir", "");
 		const dwarfDebuginfodUrls = configuration.get<string[]>("dwarfDebugInfo.debuginfodUrls", []);
 		const dwarfNoDefaultDebuginfodUrls = configuration.get<boolean>("dwarfDebugInfo.noDefaultDebuginfodUrls", false);
 
 		this._connection.sendNotification(protocol.setDwarfSymbolFindOptionsNotificationType, {
-			searchDirs : dwarfSearchDirs,
-			debuginfodCacheDir : dwarfCacheDir.length > 0 ? dwarfCacheDir : null,
-			noDefaultUrls : dwarfNoDefaultDebuginfodUrls,
-			debuginfodUrls : dwarfDebuginfodUrls
+			searchDirs: dwarfSearchDirs,
+			debuginfodCacheDir: dwarfCacheDir.length > 0 ? dwarfCacheDir : null,
+			noDefaultUrls: dwarfNoDefaultDebuginfodUrls,
+			debuginfodUrls: dwarfDebuginfodUrls
 		});
 	}
-	
+
 	private _sendUpdateModulePathMaps() {
 		if (this._connection === undefined) {
 			return;
 		}
 
 		const configuration = vscode.workspace.getConfiguration("snail");
-		if(configuration === null || configuration === undefined) {
+		if (configuration === null || configuration === undefined) {
 			return;
 		}
 
 		const modulePathMapsConfig = configuration.get<any[]>("moduleLookup.pathMap", []);
 
-		let modulePathMaps : string[][] = [];
+		let modulePathMaps: string[][] = [];
 
 		for (const map of modulePathMapsConfig) {
 			modulePathMaps.push([
@@ -185,20 +185,20 @@ export class Client {
 			simpleMaps: modulePathMaps
 		});
 	}
-	
+
 	private _sendUpdateModuleFilters() {
 		if (this._connection === undefined) {
 			return;
 		}
 
 		const configuration = vscode.workspace.getConfiguration("snail");
-		if(configuration === null || configuration === undefined) {
+		if (configuration === null || configuration === undefined) {
 			return;
 		}
 
 		let mode = protocol.ModuleFilterMode.allButExcluded;
 		const modeStr = configuration.get<string>("moduleLookup.filterMode", "All but excluded");
-		if(modeStr === "Only included") {
+		if (modeStr === "Only included") {
 			mode = protocol.ModuleFilterMode.onlyIncluded;
 		}
 
@@ -216,7 +216,7 @@ export class Client {
 
 		this._clientState = ClientState.starting;
 
-		this._connection =  await this._createConnection();
+		this._connection = await this._createConnection();
 
 		this._connection.listen();
 
@@ -233,7 +233,7 @@ export class Client {
 		this._sendUpdateModuleFilters();
 
 		vscode.workspace.onDidChangeConfiguration((event) => {
-			if(event.affectsConfiguration("snail")) {
+			if (event.affectsConfiguration("snail")) {
 				this._sendUpdatePdbOptions();
 				this._sendUpdateDwarfOptions();
 				this._sendUpdateModulePathMaps();
@@ -262,7 +262,7 @@ export class Client {
 
 		this._connection.end();
 		this._connection.dispose();
-		
+
 		this._clientState = ClientState.stopped;
 	}
 
@@ -305,7 +305,7 @@ export class Client {
 		return result.then((data) => { return data.processes; });
 	}
 
-	public async setSampleFilter(documentId: number, minTime: number|null, maxTime: number|null, excludedProcesses: number[], excludedThreads: number[]): Promise<null> {
+	public async setSampleFilter(documentId: number, minTime: number | null, maxTime: number | null, excludedProcesses: number[], excludedThreads: number[]): Promise<null> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<null>("Client is not connected");
@@ -354,7 +354,7 @@ export class Client {
 	}
 
 
-	public async retrieveFunctionsPage(documentId: number, sortBy : protocol.FunctionsSortBy, sortOrder : protocol.SortDirection, sortSourceId: number|null, processKey: number,
+	public async retrieveFunctionsPage(documentId: number, sortBy: protocol.FunctionsSortBy, sortOrder: protocol.SortDirection, sortSourceId: number | null, processKey: number,
 		pageSize: number, pageIndex: number): Promise<protocol.FunctionNode[]> {
 		await this._started;
 		if (this._connection === undefined) {
@@ -364,7 +364,7 @@ export class Client {
 		const result = this._connection.sendRequest(protocol.retrieveFunctionsPageRequestType, {
 			documentId: documentId,
 			sortBy: sortBy,
-			sortOrder : sortOrder,
+			sortOrder: sortOrder,
 			sortSourceId: sortSourceId,
 			processKey: processKey,
 			pageSize: pageSize,
@@ -374,7 +374,7 @@ export class Client {
 		return result.then((data) => { return data.functions; });
 	}
 
-	public async expandCallTreeNode(documentId: number, hotSourceId: number|null, processKey: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
+	public async expandCallTreeNode(documentId: number, hotSourceId: number | null, processKey: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.CallTreeNode[]>("Client is not connected");
@@ -425,8 +425,8 @@ export class Client {
 			return Promise.reject<protocol.SystemInfo>("Client is not connected");
 		}
 
-		const result =  this._connection.sendRequest(protocol.retrieveSystemInfoRequestType, { documentId: documentId });
-		
+		const result = this._connection.sendRequest(protocol.retrieveSystemInfoRequestType, { documentId: documentId });
+
 		return result.then((data) => { return data.systemInfo; });
 	}
 
@@ -436,15 +436,15 @@ export class Client {
 			return Promise.reject<protocol.SampleSourceInfo[]>("Client is not connected");
 		}
 
-		const result =  this._connection.sendRequest(protocol.retrieveSampleSourcesRequestType, { documentId: documentId });
-		
+		const result = this._connection.sendRequest(protocol.retrieveSampleSourcesRequestType, { documentId: documentId });
+
 		return result.then((data) => { return data.sampleSources; });
 	}
 
-	public async retrieveLineInfo(documentId: number, processKey: number, functionId: number): Promise<protocol.RetrieveLineInfoResult|null> {
+	public async retrieveLineInfo(documentId: number, processKey: number, functionId: number): Promise<protocol.RetrieveLineInfoResult | null> {
 		await this._started;
 		if (this._connection === undefined) {
-			return Promise.reject<protocol.RetrieveLineInfoResult|null>("Client is not connected");
+			return Promise.reject<protocol.RetrieveLineInfoResult | null>("Client is not connected");
 		}
 
 		const result = this._connection.sendRequest(protocol.retrieveLineInfoRequestType, {

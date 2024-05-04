@@ -59,23 +59,28 @@ export interface CallTreeNode {
 };
 
 export interface CallerCalleeNode {
-    processKey : number;
-    function : FunctionNode;
-    callers : FunctionNode[];
-    callees : FunctionNode[];
+    processKey: number;
+    function: FunctionNode;
+    callers: FunctionNode[];
+    callees: FunctionNode[];
 };
 
 export interface FunctionId {
-    processKey : number;
-    functionId : number;
+    processKey: number;
+    functionId: number;
 };
 
 export interface ProcessFunction {
     processKey: number;
-    function : FunctionNode;
+    function: FunctionNode;
 };
 
 export interface ProcessFunctions {
     processKey: number;
-    functions : FunctionNode[];
+    functions: FunctionNode[];
 };
+
+export interface InfoEntry {
+    key: string;
+    value: string;
+}

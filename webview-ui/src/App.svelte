@@ -9,8 +9,8 @@
     CallTreeNode,
     TimeSpan,
     ProcessFunction,
-    ProcessFunctions,
     SampleSourceInfo,
+    InfoEntry,
   } from "./utilities/types";
 
   import {
@@ -19,7 +19,7 @@
     vsCodePanelView,
     vsCodePanelTab,
     vsCodeProgressRing,
-    vsCodeButton
+    vsCodeButton,
   } from "@vscode/webview-ui-toolkit";
 
   import Summary from "./Summary.svelte";
@@ -32,28 +32,28 @@
     vsCodePanelTab(),
     vsCodePanelView(),
     vsCodeProgressRing(),
-    vsCodeButton()
+    vsCodeButton(),
   );
 
-  let totalTime: TimeSpan = null;
+  let totalTime: TimeSpan | null = null;
   let sampleSources: SampleSourceInfo[] = [];
-  let sourceInfo = null;
-  let sessionInfo = null;
-  let systemInfo = null;
-  let processes: ProcessInfo[] = null;
+  let sourceInfo: InfoEntry[] | null = null;
+  let sessionInfo: InfoEntry[] | null = null;
+  let systemInfo: InfoEntry[] | null = null;
+  let processes: ProcessInfo[] | null = null;
 
-  let activeHotSourceIndex: number = null;
-  let activeMainSourceIndex: number = null;
+  let activeHotSourceIndex: number | null = null;
+  let activeMainSourceIndex: number | null = null;
 
-  let activeFunction: FunctionId = null;
+  let activeFunction: FunctionId | null = null;
 
-  let activeCallerCalleeNode: CallerCalleeNode = null;
+  let activeCallerCalleeNode: CallerCalleeNode | null = null;
 
-  let callTreeRoots: Map<number, CallTreeNode> = null;
+  let callTreeRoots: Map<number, CallTreeNode | null> | null = null;
 
-  let hotFunctions: ProcessFunction[] = null;
+  let hotFunctions: ProcessFunction[] | null = null;
 
-  let activeSelectionFilter: TimeSpan = null;
+  let activeSelectionFilter: TimeSpan | null = null;
 
   onMount(() => {
     vscode.postMessage({ command: "retrieveSampleSources" });
@@ -68,9 +68,12 @@
       command: "retrieveCallersCallees",
       processKey: activeFunction.processKey,
       functionId: activeFunction.functionId,
-      sortSourceId: activeMainSourceIndex !== null ? sampleSources[activeMainSourceIndex].id : null,
+      sortSourceId:
+        activeMainSourceIndex !== null
+          ? sampleSources[activeMainSourceIndex].id
+          : null,
     });
-    if(navigate) {
+    if (navigate) {
       vscode.postMessage({
         command: "navigateToFunction",
         processKey: activeFunction.processKey,
@@ -81,7 +84,12 @@
     }
   }
 
-  function applyFilter(minTime: number|null, maxTime: number|null, excludedProcesses: number[], excludedThreads: number[]) {
+  function applyFilter(
+    minTime: number | null,
+    maxTime: number | null,
+    excludedProcesses: number[],
+    excludedThreads: number[],
+  ) {
     vscode.postMessage({
       command: "setSampleFilter",
       minTime: minTime,
@@ -93,47 +101,62 @@
 
   window.addEventListener("message", (event) => {
     if (event.data.type === "sampleSources") {
-      const sources : any[] = event.data.data;
+      const sources: any[] = event.data.data;
       const oldSampleSources = sampleSources;
       sampleSources = sources;
-      if(sources.length == 0) {
+      if (sources.length == 0) {
         activeMainSourceIndex = null;
         activeHotSourceIndex = null;
-      }
-      else {
-        const timerSourceIndex = sources.findIndex(sourceInfo => sourceInfo.name === "Timer" || sourceInfo.name.startsWith("cycles"));
-        const timerSource = timerSourceIndex === -1 ? undefined : sources[timerSourceIndex];
+      } else {
+        const timerSourceIndex = sources.findIndex(
+          (sourceInfo) =>
+            sourceInfo.name === "Timer" || sourceInfo.name.startsWith("cycles"),
+        );
+        const timerSource =
+          timerSourceIndex === -1 ? undefined : sources[timerSourceIndex];
 
-        const activeMainSourceId = activeMainSourceIndex !== null ? oldSampleSources[activeMainSourceIndex].id : null;
-        const activeMainSource = sources.find(sourceInfo => sourceInfo.id === activeMainSourceId);
-        if(activeMainSource === undefined) {
-          if(timerSource !== undefined) {
+        const activeMainSourceId =
+          activeMainSourceIndex !== null
+            ? oldSampleSources[activeMainSourceIndex].id
+            : null;
+        const activeMainSource = sources.find(
+          (sourceInfo) => sourceInfo.id === activeMainSourceId,
+        );
+        if (activeMainSource === undefined) {
+          if (timerSource !== undefined) {
             activeMainSourceIndex = timerSourceIndex;
-          }
-          else {
+          } else {
             activeMainSourceIndex = 0;
           }
         }
 
-        const activeHotSourceId = activeHotSourceIndex !== null ? oldSampleSources[activeHotSourceIndex].id : null;
-        const activeHotSource = sources.find(sourceInfo => sourceInfo.id === activeHotSourceId);
-        if(activeHotSource === undefined) {
-          if(timerSource !== undefined) {
+        const activeHotSourceId =
+          activeHotSourceIndex !== null
+            ? oldSampleSources[activeHotSourceIndex].id
+            : null;
+        const activeHotSource = sources.find(
+          (sourceInfo) => sourceInfo.id === activeHotSourceId,
+        );
+        if (activeHotSource === undefined) {
+          if (timerSource !== undefined) {
             activeHotSourceIndex = timerSourceIndex;
-          }
-          else {
+          } else {
             activeHotSourceIndex = 0;
           }
-          vscode.postMessage({ command: "retrieveHottestFunctions", sourceId: sampleSources[activeHotSourceIndex].id });
+          vscode.postMessage({
+            command: "retrieveHottestFunctions",
+            sourceId: sampleSources[activeHotSourceIndex].id,
+          });
         }
       }
-      let newSourceInfo = []
+      let newSourceInfo = [];
       for (const source of sources) {
-        newSourceInfo.push(
-          {key: source.name, value: `${source.numberOfSamples} samples (${source.averageSamplingRate.toFixed(0)} samples/s) ; ${source.hasStacks ? "has" : "no"} stacks`}
-        )
+        newSourceInfo.push({
+          key: source.name,
+          value: `${source.numberOfSamples} samples (${source.averageSamplingRate.toFixed(0)} samples/s) ; ${source.hasStacks ? "has" : "no"} stacks`,
+        });
       }
-      sourceInfo = newSourceInfo
+      sourceInfo = newSourceInfo;
     }
     if (event.data.type === "sessionInfo") {
       const info = event.data.data;
@@ -166,12 +189,18 @@
     }
     if (event.data.type === "processes") {
       processes = event.data.data;
+      if (processes === null) {
+        processes = [];
+      }
       for (const process of processes) {
         if (callTreeRoots === null || !(process.key in callTreeRoots)) {
           vscode.postMessage({
             command: "retrieveCallTreeHotPath",
             processKey: process.key,
-            sourceId: activeHotSourceIndex !== null ? sampleSources[activeHotSourceIndex].id : null,
+            sourceId:
+              activeHotSourceIndex !== null
+                ? sampleSources[activeHotSourceIndex].id
+                : null,
           });
           if (callTreeRoots === null) {
             callTreeRoots = new Map<number, CallTreeNode>();
@@ -198,14 +227,15 @@
 
     if (event.data.type === "filterSet") {
       console.log(event.data.data);
-      if(event.data.data["minTime"] === null && event.data.data["maxTime"] === null)
-      {
+      if (
+        event.data.data["minTime"] === null &&
+        event.data.data["maxTime"] === null
+      ) {
         activeSelectionFilter = null;
-      }
-      else {
+      } else {
         activeSelectionFilter = {
           start: event.data.data["minTime"],
-          end: event.data.data["maxTime"]
+          end: event.data.data["maxTime"],
         };
       }
       activeFunction = null;
@@ -213,19 +243,31 @@
       callTreeRoots = null;
       hotFunctions = null;
       callTreeRoots = new Map<number, CallTreeNode>();
-      for (const process of processes) {
-        vscode.postMessage({
-          command: "retrieveCallTreeHotPath",
-          processKey: process.key,
-          sourceId: activeHotSourceIndex !== null ? sampleSources[activeHotSourceIndex].id : null
-        });
+      if (processes !== null) {
+        for (const process of processes) {
+          vscode.postMessage({
+            command: "retrieveCallTreeHotPath",
+            processKey: process.key,
+            sourceId:
+              activeHotSourceIndex !== null
+                ? sampleSources[activeHotSourceIndex].id
+                : null,
+          });
+        }
       }
-      vscode.postMessage({ command: "retrieveHottestFunctions", sourceId : activeHotSourceIndex !== null ? sampleSources[activeHotSourceIndex].id : null });
+      vscode.postMessage({
+        command: "retrieveHottestFunctions",
+        sourceId:
+          activeHotSourceIndex !== null
+            ? sampleSources[activeHotSourceIndex].id
+            : null,
+      });
     }
 
     if (event.data.type === "callersCallees") {
-      if (event.data.data["processKey"] !== activeFunction?.processKey) return;
-      if (event.data.data["function"]["id"] !== activeFunction?.functionId)
+      if (activeFunction === null) return;
+      if (event.data.data["processKey"] !== activeFunction.processKey) return;
+      if (event.data.data["function"]["id"] !== activeFunction.functionId)
         return;
       activeCallerCalleeNode = {
         processKey: activeFunction.processKey,
@@ -236,17 +278,22 @@
     }
 
     if (event.data.type === "callTreeHotPath") {
+      if (callTreeRoots === null) return;
       callTreeRoots.set(event.data.data["processKey"], event.data.data["root"]);
       callTreeRoots = callTreeRoots;
     }
 
     if (event.data.type === "hottestFunctions") {
       hotFunctions = event.data.data["functions"];
-      if (activeFunction == null && hotFunctions.length > 0) {
-        changeActiveFunction({
-          processKey: hotFunctions[0].processKey,
-          functionId: hotFunctions[0].function.id,
-        }, false);
+      if (hotFunctions === null) return;
+      if (activeFunction === null && hotFunctions.length > 0) {
+        changeActiveFunction(
+          {
+            processKey: hotFunctions[0].processKey,
+            functionId: hotFunctions[0].function.id,
+          },
+          false,
+        );
       }
     }
   });
@@ -265,16 +312,22 @@
       <section>
         <Summary
           on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
-          on:filter={(event) => applyFilter(event.detail.minTime, event.detail.maxTime, event.detail.excludedProcesses, event.detail.excludedThreads)}
-          processes={processes}
-          totalTime={totalTime}
-          sampleSources={sampleSources}
-          sessionInfo={sessionInfo}
-          systemInfo={systemInfo}
-          sourceInfo={sourceInfo}
-          hotFunctions={hotFunctions}
-          activeFunction={activeFunction}
-          activeSelectionFilter={activeSelectionFilter}
+          on:filter={(event) =>
+            applyFilter(
+              event.detail.minTime,
+              event.detail.maxTime,
+              event.detail.excludedProcesses,
+              event.detail.excludedThreads,
+            )}
+          {processes}
+          {totalTime}
+          {sampleSources}
+          {sessionInfo}
+          {systemInfo}
+          {sourceInfo}
+          {hotFunctions}
+          {activeFunction}
+          {activeSelectionFilter}
         />
       </section>
     </vscode-panel-view>
@@ -285,7 +338,7 @@
           on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
           roots={callTreeRoots}
           hotSourceIndex={activeHotSourceIndex}
-          sampleSources={sampleSources}
+          {sampleSources}
           {activeFunction}
         />
       </section>
@@ -309,9 +362,9 @@
       <section>
         <FunctionsPage
           on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
-          sampleSources={sampleSources}
-          processes={processes}
-          activeFunction={activeFunction}
+          {sampleSources}
+          {processes}
+          {activeFunction}
         />
       </section>
     </vscode-panel-view>

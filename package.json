@@ -53,8 +53,8 @@
           "snail.pdbSymbols.searchDirs": {
             "type": "array",
             "items": {
-                "type": "string",
-                "title": "directory"
+              "type": "string",
+              "title": "directory"
             },
             "description": "Directories to search for module files (*.exe, *.dll) and debug symbol databases (*.pdb)."
           },
@@ -65,8 +65,8 @@
           "snail.pdbSymbols.serverUrls": {
             "type": "array",
             "items": {
-                "type": "string",
-                "title": "url"
+              "type": "string",
+              "title": "url"
             },
             "description": "URLs of additional symbol servers to download missing debug symbols from. E.g. https://msdl.microsoft.com/download/symbols."
           },
@@ -78,7 +78,7 @@
           "snail.dwarfDebugInfo.searchDirs": {
             "type": "array",
             "items": {
-                "type": "string"
+              "type": "string"
             },
             "description": "Directories to search for module files (executables and shared libraries *.so)"
           },
@@ -89,7 +89,7 @@
           "snail.dwarfDebugInfo.debuginfodUrls": {
             "type": "array",
             "items": {
-                "type": "string"
+              "type": "string"
             },
             "description": "URLs of additional debuginfod servers to download missing debug information from. E.g. https://debuginfod.elfutils.org/."
           },
@@ -101,23 +101,26 @@
           "snail.moduleLookup.pathMap": {
             "type": "array",
             "items": {
-                "type": "object",
-                "properties": {
-                    "source": {
-                        "type": "string",
-                        "description": "Pattern of the path to match. This will be matches with the beginning of the path."
-                    },
-                    "target": {
-                        "type": "string",
-                        "description": "If a path matches with the source pattern, the matching part will be replaced by this replace text."
-                    }
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Pattern of the path to match. This will be matches with the beginning of the path."
+                },
+                "target": {
+                  "type": "string",
+                  "description": "If a path matches with the source pattern, the matching part will be replaced by this replace text."
                 }
+              }
             },
             "description": "Path maps to be applied to module paths (executables, *.dll, *.so, ...) before trying to look the modules up."
           },
           "snail.moduleLookup.filterMode": {
             "type": "string",
-            "enum": ["All but excluded", "Only included"],
+            "enum": [
+              "All but excluded",
+              "Only included"
+            ],
             "default": "All but excluded",
             "enumDescriptions": [
               "Load all modules but the ones given in the `Filter Exclude` list",
@@ -128,14 +131,14 @@
           "snail.moduleLookup.filterInclude": {
             "type": "array",
             "items": {
-                "type": "string"
+              "type": "string"
             },
             "description": "Modules to exclude when \"Filter Mode\" is \"All but excluded\". Supports wildcards (as in '*.exe'). Needs to match the whole path, not just the filename."
           },
           "snail.moduleLookup.filterExclude": {
             "type": "array",
             "items": {
-                "type": "string"
+              "type": "string"
             },
             "description": "Modules to include when \"Filter Mode\" is \"Only included\". Supports wildcards (as in '*.exe'). Needs to match the whole path, not just the filename."
           }
@@ -164,16 +167,16 @@
   "devDependencies": {
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.1",
-    "@types/node": "16.x",
+    "@types/node": "^18.x",
     "@types/vscode": "^1.74.0",
-    "@typescript-eslint/eslint-plugin": "^5.45.0",
-    "@typescript-eslint/parser": "^5.45.0",
+    "@typescript-eslint/eslint-plugin": "7.8",
+    "@typescript-eslint/parser": "7.8",
     "@vscode/test-electron": "^2.3.9",
     "eslint": "^8.28.0",
-    "glob": "^8.0.3",
+    "glob": "^8.1.0",
     "mocha": "^10.1.0",
     "ts-loader": "^9.4.2",
-    "typescript": "^4.9.3",
+    "typescript": "^5.4.5",
     "webpack": "^5.76.0",
     "webpack-cli": "^5.0.1"
   }
