@@ -5,22 +5,22 @@
 
   const dispatch = createEventDispatcher();
 
-  export let displayTime: TimeSpan|null = null;
+  export let displayTime: TimeSpan | null = null;
 
-  export let processes: ProcessInfo[]|null = null;
+  export let processes: ProcessInfo[] | null = null;
 
   // export let activeFunction: FunctionId = null;
 
-  export let activeSelectionFilter: TimeSpan|null = null;
+  export let activeSelectionFilter: TimeSpan | null = null;
 
-  export let selection : TimeSpan|null = null;
+  export let selection: TimeSpan | null = null;
 
   export let uncheckedProcesses: number[] = [];
 
   export let uncheckedThreads: number[] = [];
 
-  let expanded: boolean[]|null = null;
-  let checked: { process: boolean; threads: boolean[] }[]|null = null;
+  let expanded: boolean[] | null = null;
+  let checked: { process: boolean; threads: boolean[] }[] | null = null;
 
   $: if (
     processes !== null &&
@@ -37,81 +37,77 @@
     }
   }
 
-  const ticks = 10
+  const ticks = 10;
 
   let delta: number = 1;
 
-  $: if(displayTime !== null) {
-    delta = (displayTime.end - displayTime.start) / 10
+  $: if (displayTime !== null) {
+    delta = (displayTime.end - displayTime.start) / 10;
   }
 
   const toggleExpansion = (i: number) => {
-    if(expanded === null) return;
+    if (expanded === null) return;
     expanded[i] = !expanded[i];
   };
-  
+
   const toggleProcessFilter = (processIndex: number) => {
-    if(checked === null || processes === null) return;
-    if(!checked[processIndex].process) {
+    if (checked === null || processes === null) return;
+    if (!checked[processIndex].process) {
       uncheckedProcesses.push(processes[processIndex].key);
       uncheckedProcesses.sort();
-    }
-    else {
+    } else {
       const index = uncheckedProcesses.indexOf(processes[processIndex].key);
-      if(index > -1) {
+      if (index > -1) {
         uncheckedProcesses.splice(index, 1);
       }
     }
-    uncheckedProcesses = uncheckedProcesses
+    uncheckedProcesses = uncheckedProcesses;
   };
   const toggleThreadFilter = (processIndex: number, threadIndex: number) => {
-    if(checked === null || processes === null) return;
-    if(!checked[processIndex].threads[threadIndex]) {
+    if (checked === null || processes === null) return;
+    if (!checked[processIndex].threads[threadIndex]) {
       uncheckedThreads.push(processes[processIndex].threads[threadIndex].key);
       uncheckedThreads.sort();
-    }
-    else {
-      const index = uncheckedThreads.indexOf(processes[processIndex].threads[threadIndex].key);
-      if(index > -1) {
+    } else {
+      const index = uncheckedThreads.indexOf(
+        processes[processIndex].threads[threadIndex].key,
+      );
+      if (index > -1) {
         uncheckedThreads.splice(index, 1);
       }
     }
-    uncheckedThreads = uncheckedThreads
+    uncheckedThreads = uncheckedThreads;
   };
 
-  function formatTick(tick: number, isBound: boolean) : string {
-    if(displayTime === null) {
+  function formatTick(tick: number, isBound: boolean): string {
+    if (displayTime === null) {
       return `${tick} ns`;
     }
 
-    const value = isBound ?
-      (tick) :
-      (tick - displayTime.start);
+    const value = isBound ? tick : tick - displayTime.start;
     let unit = "ns";
     let denom = 1;
-    if(value > 1e9) {
+    if (value > 1e9) {
       unit = "s";
       denom = 1e9;
-    }
-    else if(value > 1e6) {
+    } else if (value > 1e6) {
       unit = "ms";
       denom = 1e6;
-    }
-    else if(value > 1e3) {
+    } else if (value > 1e3) {
       unit = "µs";
       denom = 1e3;
     }
 
-    return `${isBound?'':'+'}${(value/denom).toFixed(2)}${unit}`;
+    return `${isBound ? "" : "+"}${(value / denom).toFixed(2)}${unit}`;
   }
 
-  let ticksLine : HTMLElement;
+  let ticksLine: HTMLElement;
 
-  let selectionStartTime : number|null = null;
+  let selectionStartTime: number | null = null;
 
-  function startSelect(e : MouseEvent) {
-    if(displayTime === null) return;
-    if(selectionStartTime !== null) {
+  function startSelect(e: MouseEvent) {
+    if (displayTime === null) return;
+    if (selectionStartTime !== null) {
       // should never happen
       return;
     }
@@ -120,30 +116,41 @@
 
     const bounds = ticksLine.getBoundingClientRect();
 
-    selectionStartTime = displayTime.start + (e.clientX - bounds.left) / (bounds.right - bounds.left) * (displayTime.end - displayTime.start);
+    selectionStartTime =
+      displayTime.start +
+      ((e.clientX - bounds.left) / (bounds.right - bounds.left)) *
+        (displayTime.end - displayTime.start);
 
     selection = {
       start: selectionStartTime,
-      end: selectionStartTime
+      end: selectionStartTime,
     };
   }
-  function moveSelect(e : MouseEvent) {
-    if(displayTime === null) return;
-    if(selectionStartTime === null) {
+  function moveSelect(e: MouseEvent) {
+    if (displayTime === null) return;
+    if (selectionStartTime === null) {
       return;
     }
 
     const bounds = ticksLine.getBoundingClientRect();
 
-    const currentMouseTime = Math.min(Math.max(displayTime.start, displayTime.start + (e.clientX - bounds.left) / (bounds.right - bounds.left) * (displayTime.end - displayTime.start)), displayTime.end);
+    const currentMouseTime = Math.min(
+      Math.max(
+        displayTime.start,
+        displayTime.start +
+          ((e.clientX - bounds.left) / (bounds.right - bounds.left)) *
+            (displayTime.end - displayTime.start),
+      ),
+      displayTime.end,
+    );
 
     selection = {
       start: Math.min(selectionStartTime, currentMouseTime),
-      end: Math.max(selectionStartTime, currentMouseTime)
+      end: Math.max(selectionStartTime, currentMouseTime),
     };
   }
-  function endSelect(e : MouseEvent) {
-    if(selectionStartTime === null) {
+  function endSelect(e: MouseEvent) {
+    if (selectionStartTime === null) {
       return;
     }
     e.preventDefault();
@@ -154,7 +161,7 @@
   }
 </script>
 
-<svelte:window on:mousemove={moveSelect} on:mouseup={endSelect}/>
+<svelte:window on:mousemove={moveSelect} on:mouseup={endSelect} />
 
 <table>
   <thead>
@@ -165,22 +172,16 @@
       <td class="ticks-data" on:mousedown={startSelect}>
         <div class="ticks-line" bind:this={ticksLine}>
           {#if displayTime !== null}
-            {#each {length: ticks} as _, i}
-              {#if i+1 < ticks}
-                <span
-                  class="tick tick-left"
-                  style="width: {100 / ticks}%;">
-                  {formatTick(displayTime.start + delta*i, i==0)}
+            {#each { length: ticks } as _, i}
+              {#if i + 1 < ticks}
+                <span class="tick tick-left" style="width: {100 / ticks}%;">
+                  {formatTick(displayTime.start + delta * i, i == 0)}
                 </span>
               {:else}
-                <span
-                  class="tick tick-left"
-                  style="width: {50 / ticks}%;">
-                  {formatTick(displayTime.start + delta*i, i==0)}
+                <span class="tick tick-left" style="width: {50 / ticks}%;">
+                  {formatTick(displayTime.start + delta * i, i == 0)}
                 </span>
-                <span
-                  class="tick tick-right"
-                  style="width: {50 / ticks}%;">
+                <span class="tick tick-right" style="width: {50 / ticks}%;">
                   {formatTick(displayTime.end, true)}
                 </span>
               {/if}
@@ -193,21 +194,32 @@
           <div class="selection-filter-line">
             <span
               class="selection-filter-pre"
-              style="width: {(((activeSelectionFilter.start ? Math.max(activeSelectionFilter.start, displayTime.start) : displayTime.start) - displayTime.start) /
+              style="width: {(((activeSelectionFilter.start
+                ? Math.max(activeSelectionFilter.start, displayTime.start)
+                : displayTime.start) -
+                displayTime.start) /
                 (displayTime.end - displayTime.start)) *
                 100}%;"
             />
             <span
               class="selection-filter"
-              style="width: {(((activeSelectionFilter.end ? Math.min(activeSelectionFilter.end, displayTime.end) : displayTime.end) - (activeSelectionFilter.start ? Math.max(activeSelectionFilter.start, displayTime.start) : displayTime.start)) /
+              style="width: {(((activeSelectionFilter.end
+                ? Math.min(activeSelectionFilter.end, displayTime.end)
+                : displayTime.end) -
+                (activeSelectionFilter.start
+                  ? Math.max(activeSelectionFilter.start, displayTime.start)
+                  : displayTime.start)) /
                 (displayTime.end - displayTime.start)) *
                 100}%;"
-              >
-              <span class="selection-filter-inner"/>
+            >
+              <span class="selection-filter-inner" />
             </span>
             <span
               class="selection-filter-post"
-              style="width: {((displayTime.end - (activeSelectionFilter.end ? Math.min(activeSelectionFilter.end, displayTime.end) : displayTime.end)) /
+              style="width: {((displayTime.end -
+                (activeSelectionFilter.end
+                  ? Math.min(activeSelectionFilter.end, displayTime.end)
+                  : displayTime.end)) /
                 (displayTime.end - displayTime.start)) *
                 100}%;"
             />
@@ -226,8 +238,8 @@
               style="width: {((selection.end - selection.start) /
                 (displayTime.end - displayTime.start)) *
                 100}%;"
-              >
-              <span class="selection-inner"/>
+            >
+              <span class="selection-inner" />
             </span>
             <span
               class="selection-post"
@@ -270,19 +282,25 @@
               <div class="time-line-bar">
                 <span
                   class="time-idle"
-                  style="width: {((Math.max(process.startTime, displayTime.start) - displayTime.start) /
+                  style="width: {((Math.max(
+                    process.startTime,
+                    displayTime.start,
+                  ) -
+                    displayTime.start) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
                 />
                 <span
                   class="time-active"
-                  style="width: {((Math.min(process.endTime, displayTime.end) - Math.max(process.startTime, displayTime.start)) /
+                  style="width: {((Math.min(process.endTime, displayTime.end) -
+                    Math.max(process.startTime, displayTime.start)) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
                 />
                 <span
                   class="time-idle"
-                  style="width: {((displayTime.end - Math.min(process.endTime, displayTime.end)) /
+                  style="width: {((displayTime.end -
+                    Math.min(process.endTime, displayTime.end)) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
                 />
@@ -292,21 +310,32 @@
               <div class="selection-filter-line">
                 <span
                   class="selection-filter-pre"
-                  style="width: {(((activeSelectionFilter.start ? Math.max(activeSelectionFilter.start, displayTime.start) : displayTime.start) - displayTime.start) /
+                  style="width: {(((activeSelectionFilter.start
+                    ? Math.max(activeSelectionFilter.start, displayTime.start)
+                    : displayTime.start) -
+                    displayTime.start) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
                 />
                 <span
                   class="selection-filter"
-                  style="width: {(((activeSelectionFilter.end ? Math.min(activeSelectionFilter.end, displayTime.end) : displayTime.end) - (activeSelectionFilter.start ? Math.max(activeSelectionFilter.start, displayTime.start) : displayTime.start)) /
+                  style="width: {(((activeSelectionFilter.end
+                    ? Math.min(activeSelectionFilter.end, displayTime.end)
+                    : displayTime.end) -
+                    (activeSelectionFilter.start
+                      ? Math.max(activeSelectionFilter.start, displayTime.start)
+                      : displayTime.start)) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
-                  >
-                  <span class="selection-filter-inner"/>
+                >
+                  <span class="selection-filter-inner" />
                 </span>
                 <span
                   class="selection-filter-post"
-                  style="width: {((displayTime.end - (activeSelectionFilter.end ? Math.min(activeSelectionFilter.end, displayTime.end) : displayTime.end)) /
+                  style="width: {((displayTime.end -
+                    (activeSelectionFilter.end
+                      ? Math.min(activeSelectionFilter.end, displayTime.end)
+                      : displayTime.end)) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
                 />
@@ -325,8 +354,8 @@
                   style="width: {((selection.end - selection.start) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
-                  >
-                  <span class="selection-inner"/>
+                >
+                  <span class="selection-inner" />
                 </span>
                 <span
                   class="selection-post"
@@ -359,7 +388,8 @@
                       type="checkbox"
                       bind:checked={checked[processIndex].threads[threadIndex]}
                       disabled={!checked[processIndex].process}
-                      on:change={() => toggleThreadFilter(processIndex, threadIndex)}
+                      on:change={() =>
+                        toggleThreadFilter(processIndex, threadIndex)}
                     />
                     {thread.name === null ? "[thread]" : thread.name} (TID: {thread.osId})
                   </div>
@@ -370,19 +400,28 @@
                   <div class="time-line-bar">
                     <span
                       class="time-idle"
-                      style="width: {((Math.max(thread.startTime, displayTime.start) - displayTime.start) /
+                      style="width: {((Math.max(
+                        thread.startTime,
+                        displayTime.start,
+                      ) -
+                        displayTime.start) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
                     />
                     <span
                       class="time-active"
-                      style="width: {((Math.min(thread.endTime, displayTime.end) - Math.max(thread.startTime, displayTime.start)) /
+                      style="width: {((Math.min(
+                        thread.endTime,
+                        displayTime.end,
+                      ) -
+                        Math.max(thread.startTime, displayTime.start)) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
                     />
                     <span
                       class="time-idle"
-                      style="width: {((displayTime.end - Math.min(thread.endTime, displayTime.end)) /
+                      style="width: {((displayTime.end -
+                        Math.min(thread.endTime, displayTime.end)) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
                     />
@@ -392,21 +431,38 @@
                   <div class="selection-filter-line">
                     <span
                       class="selection-filter-pre"
-                      style="width: {(((activeSelectionFilter.start ? Math.max(activeSelectionFilter.start, displayTime.start) : displayTime.start) - displayTime.start) /
+                      style="width: {(((activeSelectionFilter.start
+                        ? Math.max(
+                            activeSelectionFilter.start,
+                            displayTime.start,
+                          )
+                        : displayTime.start) -
+                        displayTime.start) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
                     />
                     <span
                       class="selection-filter"
-                      style="width: {(((activeSelectionFilter.end ? Math.min(activeSelectionFilter.end, displayTime.end) : displayTime.end) - (activeSelectionFilter.start ? Math.max(activeSelectionFilter.start, displayTime.start) : displayTime.start)) /
+                      style="width: {(((activeSelectionFilter.end
+                        ? Math.min(activeSelectionFilter.end, displayTime.end)
+                        : displayTime.end) -
+                        (activeSelectionFilter.start
+                          ? Math.max(
+                              activeSelectionFilter.start,
+                              displayTime.start,
+                            )
+                          : displayTime.start)) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
-                      >
-                      <span class="selection-filter-inner"/>
+                    >
+                      <span class="selection-filter-inner" />
                     </span>
                     <span
                       class="selection-filter-post"
-                      style="width: {((displayTime.end - (activeSelectionFilter.end ? Math.min(activeSelectionFilter.end, displayTime.end) : displayTime.end)) /
+                      style="width: {((displayTime.end -
+                        (activeSelectionFilter.end
+                          ? Math.min(activeSelectionFilter.end, displayTime.end)
+                          : displayTime.end)) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
                     />
@@ -425,8 +481,8 @@
                       style="width: {((selection.end - selection.start) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
-                      >
-                      <span class="selection-inner"/>
+                    >
+                      <span class="selection-inner" />
                     </span>
                     <span
                       class="selection-post"
@@ -506,13 +562,13 @@
   .time-data {
     position: relative;
   }
-  
+
   .time-line {
     width: 100%;
     display: flex;
     align-items: center;
   }
-  
+
   .time-line-bar {
     display: flex;
     width: 100%;
@@ -534,7 +590,7 @@
   .ticks-line {
     display: flex;
   }
-  
+
   .tick {
     padding-left: 2px;
     height: 12px;
@@ -561,10 +617,11 @@
     height: 100%;
     position: absolute;
     display: flex;
-    top:0;
+    top: 0;
   }
 
-  .selection-pre,.selection-post {
+  .selection-pre,
+  .selection-post {
     background-color: transparent;
     height: 100%;
   }
@@ -589,10 +646,11 @@
     height: 100%;
     position: absolute;
     display: flex;
-    top:0;
+    top: 0;
   }
 
-  .selection-filter-pre,.selection-filter-post {
+  .selection-filter-pre,
+  .selection-filter-post {
     background-color: var(--vscode-list-inactiveSelectionBackground);
     display: block;
     box-sizing: border-box;

@@ -284,7 +284,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
         this.currentlyDecoratedEditor = undefined;
     }
 
-    async navigateTo(functionHits: protocol.RetrieveLineInfoResult|null, sampleSources: protocol.SampleSourceInfo[]|null, sampleSourceIndex: number|null) {
+    async navigateTo(functionHits: protocol.RetrieveLineInfoResult | null, sampleSources: protocol.SampleSourceInfo[] | null, sampleSourceIndex: number | null) {
         if (functionHits === null) {
             this.clearDecorations();
             return;
@@ -310,7 +310,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
 
         let maxChars = 1;
 
-        if(sampleSourceIndex === null) {
+        if (sampleSourceIndex === null) {
             sampleSourceIndex = 0;
         }
 

@@ -1,14 +1,18 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import type { CallTreeNode, FunctionId, SampleSourceInfo } from "./utilities/types";
+  import type {
+    CallTreeNode,
+    FunctionId,
+    SampleSourceInfo,
+  } from "./utilities/types";
 
   import FunctionTable from "./components/FunctionTable.svelte";
   import TreeFunctionTableRow from "./components/FunctionTableTreeNode.svelte";
 
-  export let roots: Map<number, CallTreeNode|null>|null = null;
-  export let sampleSources : SampleSourceInfo[];
-  export let hotSourceIndex: number|null = null;
-  export let activeFunction: FunctionId|null = null;
+  export let roots: Map<number, CallTreeNode | null> | null = null;
+  export let sampleSources: SampleSourceInfo[];
+  export let hotSourceIndex: number | null = null;
+  export let activeFunction: FunctionId | null = null;
 
   const dispatch = createEventDispatcher();
 
@@ -31,7 +35,7 @@
   // });
 </script>
 
-<FunctionTable stickyHeader={true} sampleSources={sampleSources} showAllSelfColumns={false}>
+<FunctionTable stickyHeader={true} {sampleSources} showAllSelfColumns={false}>
   {#if roots !== null}
     {#each [...roots] as [processKey, root]}
       <TreeFunctionTableRow
@@ -40,8 +44,8 @@
             functionId: event.detail.functionId,
           })}
         {processKey}
-        hotSourceIndex={hotSourceIndex}
-        sampleSources={sampleSources}
+        {hotSourceIndex}
+        {sampleSources}
         node={root}
         level={0}
         {activeFunction}
