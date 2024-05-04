@@ -4,13 +4,14 @@
   import { getModuleDisplayName } from "./utilities/path";
   import type { CallerCalleeNode, FunctionNode } from "./utilities/types";
 
-  export let node: CallerCalleeNode = null;
-  export let activeSourceIndex: number = null;
+  export let node: CallerCalleeNode|null = null;
+  export let activeSourceIndex: number|null = null;
 
   const dispatch = createEventDispatcher();
 
 
   function navigateTo(func: FunctionNode) {
+    if(node === null) return;
     dispatch("navigate", {
       functionId: {
         processKey: node.processKey,

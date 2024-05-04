@@ -8,9 +8,9 @@
 
     export let processKey: number;
     export let hotSourceIndex: number|null;
-    export let node: CallTreeNode;
+    export let node: CallTreeNode|null;
     export let level: number;
-    export let activeFunction: FunctionId;
+    export let activeFunction: FunctionId|null;
     export let sampleSources : SampleSourceInfo[];
 
     const dispatch = createEventDispatcher();
@@ -33,6 +33,7 @@
     $: isActive = node !== null && activeFunction != null && processKey == activeFunction.processKey && node.functionId == activeFunction.functionId;
 
     const toggleExpansion = () => {
+        if(node === null) return;
         if(expanded === null) {
           expanded = true
         }
@@ -50,6 +51,7 @@
     };
 
     function navigateToSelf() {
+        if(node === null) return;
         dispatch("navigate", {
             functionId: {
                 processKey: processKey,
@@ -69,7 +71,7 @@
         if (event.data.type !== "callTreeNodeChildren") return;
         if (event.data.data["id"] !== node.id) return;
         if(hotSourceIndex !== null) {
-          event.data.data["children"].sort((a, b) => {
+          event.data.data["children"].sort((a:CallTreeNode, b:CallTreeNode) => {
               return -(a.hits[hotSourceIndex].totalSamples - b.hits[hotSourceIndex].totalSamples);
           });
         }

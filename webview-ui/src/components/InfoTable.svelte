@@ -1,12 +1,8 @@
 <script lang="ts">
+  import type { InfoEntry } from "../utilities/types";
     import Placeholder from "./Placeholder.svelte";
 
-    interface KeyValuePair {
-        key: string;
-        value: string;
-    }
-
-    export let entries: KeyValuePair[];
+    export let entries: InfoEntry[]|null;
 </script>
 
 <table>

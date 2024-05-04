@@ -5,10 +5,10 @@
   import FunctionTable from "./components/FunctionTable.svelte";
   import TreeFunctionTableRow from "./components/FunctionTableTreeNode.svelte";
 
-  export let roots: Map<number, CallTreeNode> = null;
+  export let roots: Map<number, CallTreeNode|null>|null = null;
   export let sampleSources : SampleSourceInfo[];
-  export let hotSourceIndex: number = null;
-  export let activeFunction: FunctionId = null;
+  export let hotSourceIndex: number|null = null;
+  export let activeFunction: FunctionId|null = null;
 
   const dispatch = createEventDispatcher();
 

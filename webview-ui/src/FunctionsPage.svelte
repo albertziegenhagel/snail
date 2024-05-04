@@ -7,8 +7,8 @@
   import FunctionTableProcessNode from "./components/FunctionTableProcessNode.svelte";
 
   export let sampleSources: SampleSourceInfo[];
-  export let processes: ProcessInfo[];
-  export let activeFunction: FunctionId = null;
+  export let processes: ProcessInfo[]|null;
+  export let activeFunction: FunctionId|null = null;
   
   let sortBy: string|null = null;
   let sortOrder: string|null = null;

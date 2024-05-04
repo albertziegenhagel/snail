@@ -79,3 +79,8 @@ export interface ProcessFunctions {
     processKey: number;
     functions : FunctionNode[];
 };
+
+export interface InfoEntry {
+    key: string;
+    value: string;
+}

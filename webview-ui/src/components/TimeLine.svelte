@@ -5,22 +5,22 @@
 
   const dispatch = createEventDispatcher();
 
-  export let displayTime: TimeSpan = null;
+  export let displayTime: TimeSpan|null = null;
 
-  export let processes: ProcessInfo[] = null;
+  export let processes: ProcessInfo[]|null = null;
 
   // export let activeFunction: FunctionId = null;
 
-  export let activeSelectionFilter: TimeSpan = null;
+  export let activeSelectionFilter: TimeSpan|null = null;
 
-  export let selection : TimeSpan = null;
+  export let selection : TimeSpan|null = null;
 
   export let uncheckedProcesses: number[] = [];
 
   export let uncheckedThreads: number[] = [];
 
-  let expanded: boolean[] = null;
-  let checked: { process: boolean; threads: boolean[] }[] = null;
+  let expanded: boolean[]|null = null;
+  let checked: { process: boolean; threads: boolean[] }[]|null = null;
 
   $: if (
     processes !== null &&
@@ -46,10 +46,12 @@
   }
 
   const toggleExpansion = (i: number) => {
+    if(expanded === null) return;
     expanded[i] = !expanded[i];
   };
   
   const toggleProcessFilter = (processIndex: number) => {
+    if(checked === null || processes === null) return;
     if(!checked[processIndex].process) {
       uncheckedProcesses.push(processes[processIndex].key);
       uncheckedProcesses.sort();
@@ -63,6 +65,7 @@
     uncheckedProcesses = uncheckedProcesses
   };
   const toggleThreadFilter = (processIndex: number, threadIndex: number) => {
+    if(checked === null || processes === null) return;
     if(!checked[processIndex].threads[threadIndex]) {
       uncheckedThreads.push(processes[processIndex].threads[threadIndex].key);
       uncheckedThreads.sort();
@@ -76,7 +79,7 @@
     uncheckedThreads = uncheckedThreads
   };
 
-  function formatTick(tick: number, isBound) : string {
+  function formatTick(tick: number, isBound: boolean) : string {
     if(displayTime === null) {
       return `${tick} ns`;
     }
@@ -102,11 +105,12 @@
     return `${isBound?'':'+'}${(value/denom).toFixed(2)}${unit}`;
   }
 
-  let ticksLine;
+  let ticksLine : HTMLElement;
 
-  let selectionStartTime : number = null;
+  let selectionStartTime : number|null = null;
 
   function startSelect(e : MouseEvent) {
+    if(displayTime === null) return;
     if(selectionStartTime !== null) {
       // should never happen
       return;
@@ -124,6 +128,7 @@
     };
   }
   function moveSelect(e : MouseEvent) {
+    if(displayTime === null) return;
     if(selectionStartTime === null) {
       return;
     }
@@ -184,7 +189,7 @@
             Time
           {/if}
         </div>
-        {#if activeSelectionFilter !== null}
+        {#if activeSelectionFilter !== null && displayTime !== null}
           <div class="selection-filter-line">
             <span
               class="selection-filter-pre"
@@ -208,7 +213,7 @@
             />
           </div>
         {/if}
-        {#if selection !== null}
+        {#if selection !== null && displayTime !== null}
           <div class="selection-line">
             <span
               class="selection-pre"
@@ -236,7 +241,7 @@
     </tr>
   </thead>
   <tbody>
-    {#if displayTime !== null && processes !== null}
+    {#if displayTime !== null && processes !== null && checked !== null && expanded !== null}
       {#each processes as process, processIndex}
         <tr class:disabled={!checked[processIndex].process}>
           <td class="name-data">
@@ -333,7 +338,7 @@
             {/if}
           </td>
         </tr>
-        {#if expanded[processIndex]}
+        {#if expanded !== null && checked !== null && expanded[processIndex]}
           {#each process.threads as thread, threadIndex}
             <tr
               class:disabled={!checked[processIndex].process ||

@@ -4,7 +4,7 @@
     import type { FunctionNode, SampleSourceInfo } from "../utilities/types";
     import Placeholder from "./Placeholder.svelte";
 
-    export let func: FunctionNode;
+    export let func: FunctionNode|null;
     export let isHot: boolean = false;
     export let isActive: boolean = false;
     export let showAllSelfColumns : boolean = true;
@@ -14,7 +14,7 @@
 
     function navigateToSelf() {
         dispatch("navigate", {
-            functionId: func.id,
+            functionId: func!.id,
         });
     }
 </script>

@@ -7,19 +7,19 @@
     import FunctionTableRow from "./FunctionTableRow.svelte";
 
     export let process: ProcessInfo;
-    export let activeFunction: FunctionId;
+    export let activeFunction: FunctionId|null;
     export let sampleSources : SampleSourceInfo[];
 
-    export let sortBy: string;
-    export let sortOrder: string;
+    export let sortBy: string|null;
+    export let sortOrder: string|null;
     export let sortSourceId: number|null;
 
     const dispatch = createEventDispatcher();
 
     let processPseudoFunc: FunctionNode;
-    let functions: FunctionNode[] = null;
+    let functions: FunctionNode[]|null = null;
 
-    let canHaveMore:boolean = null;
+    let canHaveMore:boolean|null = null;
     let waitingForMore:boolean = false;
 
     let loadingAll = false;

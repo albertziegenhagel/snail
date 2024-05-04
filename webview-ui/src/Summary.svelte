@@ -11,23 +11,24 @@
         ProcessInfo,
         TimeSpan,
         SampleSourceInfo,
+        InfoEntry,
     } from "./utilities/types";
 
-    export let processes: ProcessInfo[] = null;
-    export let totalTime: TimeSpan = null;
+    export let processes: ProcessInfo[]|null = null;
+    export let totalTime: TimeSpan|null = null;
     export let sampleSources: SampleSourceInfo[];
-    export let sessionInfo = null;
-    export let systemInfo = null;
-    export let sourceInfo = null;
+    export let sessionInfo: InfoEntry[]|null = null;
+    export let systemInfo: InfoEntry[]|null = null;
+    export let sourceInfo: InfoEntry[]|null = null;
 
-    export let hotFunctions: ProcessFunction[] = null;
-    export let activeFunction: FunctionId;
+    export let hotFunctions: ProcessFunction[]|null = null;
+    export let activeFunction: FunctionId|null;
 
     export let activeSelectionFilter: TimeSpan|null = null;
 
-    let activeSelection: TimeSpan;
+    let activeSelection: TimeSpan|null;
 
-    let wipSelectionFilter: TimeSpan = null;
+    let wipSelectionFilter: TimeSpan|null = null;
 
     let excludedProcesses: number[] = []
     let excludedThreads: number[] = []
@@ -72,15 +73,11 @@
         };
       }
       else {
-        wipSelectionFilter = {
-          start: null,
-          end: null
-        };
+        wipSelectionFilter = null;
       }
-      console.log(wipSelectionFilter);
       dispatch("filter", {
-        minTime: wipSelectionFilter.start,
-        maxTime: wipSelectionFilter.end,
+        minTime: wipSelectionFilter?.start,
+        maxTime: wipSelectionFilter?.end,
         excludedProcesses: excludedProcesses,
         excludedThreads: excludedThreads
       });
@@ -90,13 +87,10 @@
     }
 
     function clearSelectionFilter() {
-      wipSelectionFilter = {
-        start: null,
-        end: null
-      };
+      wipSelectionFilter = null;
       dispatch("filter", {
-        minTime: wipSelectionFilter.start,
-        maxTime: wipSelectionFilter.end,
+        minTime: null,
+        maxTime: null,
         excludedProcesses: excludedProcesses,
         excludedThreads: excludedThreads
       });

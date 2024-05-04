@@ -9,8 +9,8 @@
     CallTreeNode,
     TimeSpan,
     ProcessFunction,
-    ProcessFunctions,
     SampleSourceInfo,
+    InfoEntry,
   } from "./utilities/types";
 
   import {
@@ -35,25 +35,25 @@
     vsCodeButton()
   );
 
-  let totalTime: TimeSpan = null;
+  let totalTime: TimeSpan|null = null;
   let sampleSources: SampleSourceInfo[] = [];
-  let sourceInfo = null;
-  let sessionInfo = null;
-  let systemInfo = null;
-  let processes: ProcessInfo[] = null;
+  let sourceInfo: InfoEntry[]|null = null;
+  let sessionInfo: InfoEntry[]|null = null;
+  let systemInfo: InfoEntry[]|null = null;
+  let processes: ProcessInfo[]|null = null;
 
-  let activeHotSourceIndex: number = null;
-  let activeMainSourceIndex: number = null;
+  let activeHotSourceIndex: number|null = null;
+  let activeMainSourceIndex: number|null = null;
 
-  let activeFunction: FunctionId = null;
+  let activeFunction: FunctionId|null = null;
 
-  let activeCallerCalleeNode: CallerCalleeNode = null;
+  let activeCallerCalleeNode: CallerCalleeNode|null = null;
 
-  let callTreeRoots: Map<number, CallTreeNode> = null;
+  let callTreeRoots: Map<number, CallTreeNode|null>|null = null;
 
-  let hotFunctions: ProcessFunction[] = null;
+  let hotFunctions: ProcessFunction[]|null = null;
 
-  let activeSelectionFilter: TimeSpan = null;
+  let activeSelectionFilter: TimeSpan|null = null;
 
   onMount(() => {
     vscode.postMessage({ command: "retrieveSampleSources" });
@@ -166,6 +166,9 @@
     }
     if (event.data.type === "processes") {
       processes = event.data.data;
+      if(processes === null) {
+        processes = [];
+      }
       for (const process of processes) {
         if (callTreeRoots === null || !(process.key in callTreeRoots)) {
           vscode.postMessage({
@@ -213,20 +216,21 @@
       callTreeRoots = null;
       hotFunctions = null;
       callTreeRoots = new Map<number, CallTreeNode>();
+      if(processes !== null){
       for (const process of processes) {
         vscode.postMessage({
           command: "retrieveCallTreeHotPath",
           processKey: process.key,
           sourceId: activeHotSourceIndex !== null ? sampleSources[activeHotSourceIndex].id : null
         });
-      }
+      }}
       vscode.postMessage({ command: "retrieveHottestFunctions", sourceId : activeHotSourceIndex !== null ? sampleSources[activeHotSourceIndex].id : null });
     }
 
     if (event.data.type === "callersCallees") {
-      if (event.data.data["processKey"] !== activeFunction?.processKey) return;
-      if (event.data.data["function"]["id"] !== activeFunction?.functionId)
-        return;
+      if (activeFunction === null) return;
+      if (event.data.data["processKey"] !== activeFunction.processKey) return;
+      if (event.data.data["function"]["id"] !== activeFunction.functionId) return;
       activeCallerCalleeNode = {
         processKey: activeFunction.processKey,
         function: event.data.data["function"],
@@ -236,13 +240,15 @@
     }
 
     if (event.data.type === "callTreeHotPath") {
+      if(callTreeRoots === null) return;
       callTreeRoots.set(event.data.data["processKey"], event.data.data["root"]);
       callTreeRoots = callTreeRoots;
     }
 
     if (event.data.type === "hottestFunctions") {
       hotFunctions = event.data.data["functions"];
-      if (activeFunction == null && hotFunctions.length > 0) {
+      if(hotFunctions === null) return;
+      if (activeFunction === null && hotFunctions.length > 0) {
         changeActiveFunction({
           processKey: hotFunctions[0].processKey,
           functionId: hotFunctions[0].function.id,
