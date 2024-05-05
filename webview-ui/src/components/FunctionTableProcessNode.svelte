@@ -140,7 +140,7 @@
 </script>
 
 <FunctionTableRow
-  func={processPseudoFunc}
+  node={processPseudoFunc}
   isHot={false}
   isActive={false}
   {sampleSources}
@@ -162,7 +162,7 @@
     {#each functions as func}
       <FunctionTableRow
         on:navigate={(event) => navigateToFunction(event.detail.functionId)}
-        {func}
+        node={func}
         isHot={false}
         isActive={activeFunction != null &&
           process.key == activeFunction.processKey &&
@@ -180,7 +180,7 @@
       </FunctionTableRow>
     {/each}
     {#if waitingForMore}
-      <FunctionTableRow func={null} isHot={false} {sampleSources}>
+      <FunctionTableRow node={null} isHot={false} {sampleSources}>
         <span slot="function-name-prefix" class="function-name-prefix">
           <div
             style="padding-left: calc(var(--design-unit) * 2px);"
@@ -213,7 +213,7 @@
       </tr>
     {/if}
   {:else}
-    <FunctionTableRow func={null} isHot={false} {sampleSources} />
+    <FunctionTableRow node={null} isHot={false} {sampleSources} />
   {/if}
 {/if}
 

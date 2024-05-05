@@ -95,7 +95,7 @@
 
 <FunctionTableRow
   on:navigate={(event) => navigateToSelf()}
-  func={node}
+  {node}
   {isHot}
   {isActive}
   {sampleSources}

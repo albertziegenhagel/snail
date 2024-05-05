@@ -4,7 +4,7 @@
   import type { FunctionNode, SampleSourceInfo } from "../utilities/types";
   import Placeholder from "./Placeholder.svelte";
 
-  export let func: FunctionNode | null;
+  export let node: FunctionNode | null;
   export let isHot: boolean = false;
   export let isActive: boolean = false;
   export let showAllSelfColumns: boolean = true;
@@ -14,7 +14,7 @@
 
   function navigateToSelf() {
     dispatch("navigate", {
-      functionId: func!.id,
+      functionId: node!.id,
     });
   }
 </script>
@@ -26,13 +26,17 @@
       {#if isHot}
         <div class="hot"><i class="codicon codicon-flame" /></div>
       {/if}
-      {#if func !== null}
-        <span
-          on:click={() => navigateToSelf()}
-          on:keypress={() => navigateToSelf()}
-          class="function-name-text clickable"
-          title={func.name}>{func.name}</span
-        >
+      {#if node !== null}
+        {#if node.type === "function"}
+          <span
+            on:click={() => navigateToSelf()}
+            on:keypress={() => navigateToSelf()}
+            class="function-name-text clickable"
+            title={node.name}>{node.name}</span
+          >
+        {:else}
+          <span class="function-name-text" title={node.name}>{node.name}</span>
+        {/if}
       {:else}
         <Placeholder />
       {/if}
@@ -43,9 +47,9 @@
       <td>
         <div class="total-samples">
           <slot name="total-samples-prefix" />
-          {#if func !== null}
+          {#if node !== null}
             <span class="total-samples-text"
-              >{func.hits[sourceIndex].totalSamples} ({func.hits[
+              >{node.hits[sourceIndex].totalSamples} ({node.hits[
                 sourceIndex
               ].totalPercent.toFixed(2)}%)</span
             >
@@ -59,9 +63,9 @@
       <td>
         <div class="self-samples">
           <slot name="self-samples-prefix" />
-          {#if func !== null}
+          {#if node !== null}
             <span class="self-samples-text"
-              >{func.hits[sourceIndex].selfSamples} ({func.hits[
+              >{node.hits[sourceIndex].selfSamples} ({node.hits[
                 sourceIndex
               ].selfPercent.toFixed(2)}%)</span
             >
@@ -75,9 +79,9 @@
   <td>
     <div class="modules">
       <slot name="modules-prefix" />
-      {#if func !== null}
-        <span class="modules-text" title={func.module}
-          >{getModuleDisplayName(func.module)}</span
+      {#if node !== null}
+        <span class="modules-text" title={node.module}
+          >{getModuleDisplayName(node.module)}</span
         >
       {:else}
         <Placeholder />

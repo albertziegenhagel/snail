@@ -195,7 +195,7 @@
                   functionId: func.function.id,
                 },
               })}
-            func={func.function}
+            node={func.function}
             isHot={true}
             {sampleSources}
             isActive={func.processKey == activeFunction?.processKey &&
@@ -204,10 +204,10 @@
         {/each}
       {:else}
         <!-- Placeholders -->
-        <FunctionTableRow func={null} isHot={true} {sampleSources} />
-        <FunctionTableRow func={null} isHot={true} {sampleSources} />
-        <FunctionTableRow func={null} isHot={true} {sampleSources} />
-        <FunctionTableRow func={null} isHot={true} {sampleSources} />
+        <FunctionTableRow node={null} isHot={true} {sampleSources} />
+        <FunctionTableRow node={null} isHot={true} {sampleSources} />
+        <FunctionTableRow node={null} isHot={true} {sampleSources} />
+        <FunctionTableRow node={null} isHot={true} {sampleSources} />
       {/if}
     </FunctionTable>
   </Pane>
