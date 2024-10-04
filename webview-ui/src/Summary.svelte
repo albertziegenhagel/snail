@@ -126,22 +126,26 @@
 
     <div class="toolbar-buttons" slot="toolbar">
       <vscode-button
+        role="button"
+        tabindex="0"
         appearance="icon"
         aria-label="Apply Filter"
         title="Apply Filter"
         disabled={!hasFilterChanges}
-        on:click={applyFiler}
-        on:keypress={applyFiler}
+        on:click|stopPropagation={applyFiler}
+        on:keypress|stopPropagation={applyFiler}
       >
         <span class="codicon codicon-filter"></span>
       </vscode-button>
       <vscode-button
+        role="button"
+        tabindex="0"
         appearance="icon"
         aria-label="Reset Selection Filter"
         title="Reset Selection Filter"
         disabled={!hasSelectionFilter}
-        on:click={clearSelectionFilter}
-        on:keypress={clearSelectionFilter}
+        on:click|stopPropagation={clearSelectionFilter}
+        on:keypress|stopPropagation={clearSelectionFilter}
       >
         <!-- <span class="codicon codicon-refresh"></span> -->
         <span class="icon-group">
@@ -151,33 +155,39 @@
       </vscode-button>
 
       <vscode-button
+        role="button"
+        tabindex="0"
         appearance="icon"
         aria-label="Clear Selection"
         title="Clear Selection"
         disabled={!hasSelection}
-        on:click={clearSelection}
-        on:keypress={clearSelection}
+        on:click|stopPropagation={clearSelection}
+        on:keypress|stopPropagation={clearSelection}
       >
         <span class="codicon codicon-clear-all"></span>
       </vscode-button>
 
       <vscode-button
+        role="button"
+        tabindex="0"
         appearance="icon"
         aria-label="Zoom to Selection"
         title="Zoom to Selection"
         disabled={!hasSelection}
-        on:click={zoomToSelection}
-        on:keypress={zoomToSelection}
+        on:click|stopPropagation={zoomToSelection}
+        on:keypress|stopPropagation={zoomToSelection}
       >
         <span class="codicon codicon-zoom-in"></span>
       </vscode-button>
       <vscode-button
+        role="button"
+        tabindex="0"
         appearance="icon"
         aria-label="Reset Zoom"
         title="Reset Zoom"
         disabled={!isZoomed}
-        on:click={resetZoom}
-        on:keypress={resetZoom}
+        on:click|stopPropagation={resetZoom}
+        on:keypress|stopPropagation={resetZoom}
       >
         <span class="codicon codicon-zoom-out"></span>
       </vscode-button>
@@ -195,7 +205,7 @@
                   functionId: func.function.id,
                 },
               })}
-            func={func.function}
+            node={func.function}
             isHot={true}
             {sampleSources}
             isActive={func.processKey == activeFunction?.processKey &&
@@ -204,10 +214,10 @@
         {/each}
       {:else}
         <!-- Placeholders -->
-        <FunctionTableRow func={null} isHot={true} {sampleSources} />
-        <FunctionTableRow func={null} isHot={true} {sampleSources} />
-        <FunctionTableRow func={null} isHot={true} {sampleSources} />
-        <FunctionTableRow func={null} isHot={true} {sampleSources} />
+        <FunctionTableRow node={null} isHot={true} {sampleSources} />
+        <FunctionTableRow node={null} isHot={true} {sampleSources} />
+        <FunctionTableRow node={null} isHot={true} {sampleSources} />
+        <FunctionTableRow node={null} isHot={true} {sampleSources} />
       {/if}
     </FunctionTable>
   </Pane>

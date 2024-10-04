@@ -255,8 +255,6 @@ export interface ExpandCallTreeNodeParams {
     // The id of the document to perform the operation on.
     // This should be an id that resulted from a call to `readDocument`.
     documentId: number;
-
-    hotSourceId: number | null;
 }
 
 export interface ExpandCallTreeNodeResult {

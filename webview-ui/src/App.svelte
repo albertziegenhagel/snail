@@ -304,9 +304,7 @@
     <vscode-panel-tab id="summary-tab">Summary</vscode-panel-tab>
     <vscode-panel-tab id="call-tree-tab">Call Tree</vscode-panel-tab>
     <vscode-panel-tab id="caller-callee-tab">Caller/Callee</vscode-panel-tab>
-    <vscode-panel-tab id="modules-tab">Modules</vscode-panel-tab>
     <vscode-panel-tab id="functions-tab">Functions</vscode-panel-tab>
-    <!-- <vscode-panel-tab id="flame-graph-tab">FLAME GRAPH</vscode-panel-tab> -->
 
     <vscode-panel-view id="summary-view">
       <section>
@@ -352,10 +350,6 @@
           activeSourceIndex={activeMainSourceIndex}
         />
       </section>
-    </vscode-panel-view>
-
-    <vscode-panel-view id="modules-view">
-      <section>modules...</section>
     </vscode-panel-view>
 
     <vscode-panel-view id="functions-view">

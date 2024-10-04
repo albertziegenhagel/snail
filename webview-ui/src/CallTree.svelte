@@ -7,7 +7,7 @@
   } from "./utilities/types";
 
   import FunctionTable from "./components/FunctionTable.svelte";
-  import TreeFunctionTableRow from "./components/FunctionTableTreeNode.svelte";
+  import FunctionTableTreeNode from "./components/FunctionTableTreeNode.svelte";
 
   export let roots: Map<number, CallTreeNode | null> | null = null;
   export let sampleSources: SampleSourceInfo[];
@@ -38,7 +38,7 @@
 <FunctionTable stickyHeader={true} {sampleSources} showAllSelfColumns={false}>
   {#if roots !== null}
     {#each [...roots] as [processKey, root]}
-      <TreeFunctionTableRow
+      <FunctionTableTreeNode
         on:navigate={(event) =>
           dispatch("navigate", {
             functionId: event.detail.functionId,

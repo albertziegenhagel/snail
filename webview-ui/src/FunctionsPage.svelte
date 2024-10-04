@@ -91,9 +91,9 @@
     {/each}
   {:else}
     <!-- Placeholders -->
-    <FunctionTableRow func={null} isHot={false} {sampleSources} />
-    <FunctionTableRow func={null} isHot={false} {sampleSources} />
-    <FunctionTableRow func={null} isHot={false} {sampleSources} />
-    <FunctionTableRow func={null} isHot={false} {sampleSources} />
+    <FunctionTableRow node={null} isHot={false} {sampleSources} />
+    <FunctionTableRow node={null} isHot={false} {sampleSources} />
+    <FunctionTableRow node={null} isHot={false} {sampleSources} />
+    <FunctionTableRow node={null} isHot={false} {sampleSources} />
   {/if}
 </FunctionTable>

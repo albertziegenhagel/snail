@@ -53,8 +53,6 @@
     if (expanded && node.children === null) {
       vscode.postMessage({
         command: "expandCallTreeNode",
-        hotSourceId:
-          hotSourceIndex !== null ? sampleSources[hotSourceIndex].id : null,
         processKey: processKey,
         nodeId: node.id,
       });
@@ -95,7 +93,7 @@
 
 <FunctionTableRow
   on:navigate={(event) => navigateToSelf()}
-  func={node}
+  {node}
   {isHot}
   {isActive}
   {sampleSources}
@@ -103,12 +101,15 @@
 >
   <span slot="function-name-prefix" class="function-name-prefix">
     <div
+      role="button"
+      tabindex="0"
       on:click={toggleExpansion}
       on:keypress={toggleExpansion}
       style="padding-left: calc(var(--design-unit) * {level * 2}px);"
       class="twistie codicon codicon-chevron-down"
       class:collapsible={hasChildren}
       class:collapsed={!expanded}
+      aria-expanded={expanded}
     />
   </span>
 </FunctionTableRow>

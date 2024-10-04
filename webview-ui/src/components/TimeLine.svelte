@@ -259,11 +259,14 @@
           <td class="name-data">
             <div>
               <div
+                role="button"
+                tabindex="0"
                 on:click={() => toggleExpansion(processIndex)}
                 on:keypress={() => toggleExpansion(processIndex)}
                 class="twistie codicon codicon-chevron-down"
                 class:collapsible={process.threads.length > 0}
                 class:collapsed={!expanded[processIndex]}
+                aria-expanded={expanded[processIndex]}
               />
               <div class="input-group">
                 <input
