@@ -183,7 +183,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                             });
                         return;
                     case "expandCallTreeNode":
-                        client.expandCallTreeNode(document.documentId, message.hotSourceId, message.processKey, message.nodeId).then(
+                        client.expandCallTreeNode(document.documentId, message.processKey, message.nodeId).then(
                             (children) => {
                                 webview.postMessage({
                                     "type": "callTreeNodeChildren",

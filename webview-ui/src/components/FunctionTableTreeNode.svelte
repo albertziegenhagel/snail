@@ -53,8 +53,6 @@
     if (expanded && node.children === null) {
       vscode.postMessage({
         command: "expandCallTreeNode",
-        hotSourceId:
-          hotSourceIndex !== null ? sampleSources[hotSourceIndex].id : null,
         processKey: processKey,
         nodeId: node.id,
       });

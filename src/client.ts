@@ -374,7 +374,7 @@ export class Client {
 		return result.then((data) => { return data.functions; });
 	}
 
-	public async expandCallTreeNode(documentId: number, hotSourceId: number | null, processKey: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
+	public async expandCallTreeNode(documentId: number, processKey: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.CallTreeNode[]>("Client is not connected");
@@ -382,7 +382,6 @@ export class Client {
 
 		const result = this._connection.sendRequest(protocol.expandCallTreeNodeRequestType, {
 			documentId: documentId,
-			hotSourceId: hotSourceId,
 			processKey: processKey,
 			nodeId: nodeId
 		});
