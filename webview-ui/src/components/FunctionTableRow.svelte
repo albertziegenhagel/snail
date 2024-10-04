@@ -29,11 +29,15 @@
       {#if node !== null}
         {#if node.type === "function"}
           <span
+            role="button"
+            tabindex="0"
             on:click={() => navigateToSelf()}
             on:keypress={() => navigateToSelf()}
             class="function-name-text clickable"
-            title={node.name}>{node.name}</span
+            title={node.name}
           >
+            {node.name}
+          </span>
         {:else}
           <span class="function-name-text" title={node.name}>{node.name}</span>
         {/if}

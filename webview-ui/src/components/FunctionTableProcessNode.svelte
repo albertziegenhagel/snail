@@ -147,12 +147,15 @@
 >
   <span slot="function-name-prefix" class="function-name-prefix">
     <div
+      role="button"
+      tabindex="0"
       on:click={toggleExpansion}
       on:keypress={toggleExpansion}
       style="padding-left: calc(var(--design-unit) * {0}px);"
       class="twistie codicon codicon-chevron-down"
       class:collapsible={isNotEmpty}
       class:collapsed={!expanded}
+      aria-expanded={expanded}
     />
   </span>
 </FunctionTableRow>

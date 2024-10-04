@@ -10,22 +10,19 @@
 
 <div class="pane">
   <div
-    on:click|self={toggleExpansion}
-    on:keypress|self={toggleExpansion}
+    role="button"
+    tabindex="0"
+    on:click={toggleExpansion}
+    on:keypress={toggleExpansion}
     class="pane-header"
+    aria-expanded={expanded}
   >
     <div
-      on:click|self={toggleExpansion}
-      on:keypress|self={toggleExpansion}
       class="twistie codicon codicon-chevron-down"
       class:collapsed={!expanded}
+      aria-expanded={expanded}
     ></div>
-    <h3
-      on:click|self={toggleExpansion}
-      on:keypress|self={toggleExpansion}
-      class="title"
-      {title}
-    >
+    <h3 class="title">
       {title}
     </h3>
 

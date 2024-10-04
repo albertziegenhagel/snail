@@ -48,6 +48,8 @@
         {:else}
           {#each node.callers as func}
             <div
+              role="button"
+              tabindex="0"
               on:click={() => {
                 navigateTo(func);
               }}
@@ -171,6 +173,8 @@
         {:else}
           {#each node.callees as func}
             <div
+              role="button"
+              tabindex="0"
               on:click={() => {
                 navigateTo(func);
               }}
