@@ -1,7 +1,13 @@
 name: "Deploy head"
 
 on:
-  workflow_call
+  workflow_run:
+    workflows:
+      - Package
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -69,11 +75,8 @@ jobs:
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: package.yml
-          workflow_conclusion: in_progress
-          branch: ${{ github.ref_name }}
+          run_id: ${{ github.event.workflow_run.id }}
           name: snail-${{ matrix.target }}
-          check_artifacts:  true
-          search_artifacts: true
 
       - name: Rename release asset
         run: |

@@ -68,9 +68,3 @@ jobs:
         with: 
           name: snail-${{ matrix.target }}
           path: ${{ github.workspace }}/*.vsix
-
-  deploy-head:
-    name: "Deploy head"
-    needs: package
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/deploy-head.yml
