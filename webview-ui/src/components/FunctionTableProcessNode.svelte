@@ -1,75 +1,47 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
-
   import { vscode } from "../utilities/vscode";
   import type {
     ProcessInfo,
     FunctionId,
     FunctionNode,
     SampleSourceInfo,
+    HitCounts,
   } from "../utilities/types";
 
   import FunctionTableRow from "./FunctionTableRow.svelte";
+  import { untrack } from "svelte";
 
-  export let process: ProcessInfo;
-  export let activeFunction: FunctionId | null;
-  export let sampleSources: SampleSourceInfo[];
+  interface Props {
+    process: ProcessInfo;
+    activeFunction: FunctionId | null;
+    sampleSources: SampleSourceInfo[];
+    sortBy: string | null;
+    sortOrder: string | null;
+    sortSourceId: number | null;
+    navigate: (functionId: FunctionId) => void;
+  }
 
-  export let sortBy: string | null;
-  export let sortOrder: string | null;
-  export let sortSourceId: number | null;
+  let {
+    process,
+    activeFunction,
+    sampleSources,
+    sortBy,
+    sortOrder,
+    sortSourceId,
+    navigate,
+  }: Props = $props();
 
-  const dispatch = createEventDispatcher();
+  let processPseudoFunc: FunctionNode | null = $state(null);
+  let functions: FunctionNode[] | null = $state(null);
 
-  let processPseudoFunc: FunctionNode;
-  let functions: FunctionNode[] | null = null;
-
-  let canHaveMore: boolean | null = null;
-  let waitingForMore: boolean = false;
+  let canHaveMore: boolean | null = $state(null);
+  let waitingForMore: boolean = $state(false);
 
   let loadingAll = false;
 
   const pageSize = 100;
 
-  $: isNotEmpty = functions === null || functions.length > 0;
-
-  $: if (process !== null) {
-    processPseudoFunc = {
-      id: -1,
-      name: `${process.name} (PID: ${process.osId})`,
-      module: "[multiple]",
-      type: "process",
-      hits: [],
-    };
-    for (let source of sampleSources) {
-      processPseudoFunc.hits.push({
-        sourceId: source.id,
-        selfPercent: 0.0,
-        selfSamples: 0,
-        totalPercent: 0.0,
-        totalSamples: 0,
-      });
-    }
-  }
-
-  let expanded: boolean | null = null;
-
-  $: if (functions !== null) {
-    if (expanded === null) {
-      expanded = true;
-    }
-  }
-
-  $: if (sortBy !== null || sortOrder !== null || sortSourceId !== null) {
-    functions = null;
-    loadMoreIfExpanded();
-  }
-
-  function loadMoreIfExpanded() {
-    if (expanded) {
-      loadMore();
-    }
-  }
+  let expanded: boolean | null = $state(null);
 
   function loadMore() {
     const useSortBy = sortBy === null ? "name" : sortBy;
@@ -105,11 +77,9 @@
   }
 
   function navigateToFunction(functionId: number) {
-    dispatch("navigate", {
-      functionId: {
-        processKey: process.key,
-        functionId: functionId,
-      },
+    navigate({
+      processKey: process.key,
+      functionId: functionId,
     });
   }
 
@@ -137,6 +107,46 @@
       loadMore();
     }
   });
+  $effect(() => {
+    // reload functions on sort change
+    if (sortBy !== null || sortOrder !== null || sortSourceId !== null) {
+      untrack(() => {
+        functions = null;
+        if (expanded) {
+          loadMore();
+        }
+      });
+    }
+  });
+  let isNotEmpty = $derived.by(() => {
+    return functions === null || functions.length > 0;
+  });
+  $effect(() => {
+    // rebuild the displayed function object when necessary
+    let hits: HitCounts[] = [];
+    for (let source of sampleSources) {
+      hits.push({
+        sourceId: source.id,
+        selfPercent: 0.0,
+        selfSamples: 0,
+        totalPercent: 0.0,
+        totalSamples: 0,
+      });
+    }
+    processPseudoFunc = {
+      id: -1,
+      name: `${process.name} (PID: ${process.osId})`,
+      module: "[multiple]",
+      type: "process",
+      hits: hits,
+    };
+  });
+  $effect(() => {
+    // initialize the expandable state when we receive functions
+    if (functions !== null && expanded === null) {
+      expanded = true;
+    }
+  });
 </script>
 
 <FunctionTableRow
@@ -145,26 +155,28 @@
   isActive={false}
   {sampleSources}
 >
-  <span slot="function-name-prefix" class="function-name-prefix">
-    <div
-      role="button"
-      tabindex="0"
-      on:click={toggleExpansion}
-      on:keypress={toggleExpansion}
-      style="padding-left: calc(var(--design-unit) * {0}px);"
-      class="twistie codicon codicon-chevron-down"
-      class:collapsible={isNotEmpty}
-      class:collapsed={!expanded}
-      aria-expanded={expanded}
-    />
-  </span>
+  {#snippet functionNamePrefix()}
+    <span class="function-name-prefix">
+      <div
+        role="button"
+        tabindex="0"
+        onclick={toggleExpansion}
+        onkeypress={toggleExpansion}
+        style="padding-left: calc(var(--design-unit) * {0}px);"
+        class="twistie codicon codicon-chevron-down"
+        class:collapsible={isNotEmpty}
+        class:collapsed={!expanded}
+        aria-expanded={expanded}
+      ></div>
+    </span>
+  {/snippet}
 </FunctionTableRow>
 
 {#if expanded && process !== null}
   {#if functions !== null}
     {#each functions as func}
       <FunctionTableRow
-        on:navigate={(event) => navigateToFunction(event.detail.functionId)}
+        navigate={(functionId) => navigateToFunction(functionId)}
         node={func}
         isHot={false}
         isActive={activeFunction != null &&
@@ -172,26 +184,30 @@
           func.id == activeFunction.functionId}
         {sampleSources}
       >
-        <span slot="function-name-prefix" class="function-name-prefix">
-          <div
-            style="padding-left: calc(var(--design-unit) * 2px);"
-            class="twistie codicon codicon-chevron-down"
-            class:collapsible={false}
-            class:collapsed={false}
-          />
-        </span>
+        {#snippet functionNamePrefix()}
+          <span class="function-name-prefix">
+            <div
+              style="padding-left: calc(var(--design-unit) * 2px);"
+              class="twistie codicon codicon-chevron-down"
+              class:collapsible={false}
+              class:collapsed={false}
+            ></div>
+          </span>
+        {/snippet}
       </FunctionTableRow>
     {/each}
     {#if waitingForMore}
       <FunctionTableRow node={null} isHot={false} {sampleSources}>
-        <span slot="function-name-prefix" class="function-name-prefix">
-          <div
-            style="padding-left: calc(var(--design-unit) * 2px);"
-            class="twistie codicon codicon-chevron-down"
-            class:collapsible={false}
-            class:collapsed={false}
-          />
-        </span>
+        {#snippet functionNamePrefix()}
+          <span class="function-name-prefix">
+            <div
+              style="padding-left: calc(var(--design-unit) * 2px);"
+              class="twistie codicon codicon-chevron-down"
+              class:collapsible={false}
+              class:collapsed={false}
+            ></div>
+          </span>
+        {/snippet}
       </FunctionTableRow>
     {:else if canHaveMore !== null && canHaveMore}
       <tr>
@@ -203,13 +219,13 @@
                 class="twistie codicon codicon-chevron-down"
                 class:collapsible={false}
                 class:collapsed={false}
-              />
+              ></div>
             </span>
             <span class="load-more"
-              ><a href="#top" on:click={() => loadMore()}>more</a></span
+              ><a href="#top" onclick={() => loadMore()}>more</a></span
             >
             <span class="load-all"
-              ><a href="#top" on:click={() => loadAll()}>all</a></span
+              ><a href="#top" onclick={() => loadAll()}>all</a></span
             >
           </div>
         </td>

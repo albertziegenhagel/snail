@@ -1,23 +1,31 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
-
   import type { SampleSourceInfo } from "../utilities/types";
-  export let stickyHeader: boolean = false;
-  export let showAllSelfColumns: boolean = true;
-  export let sampleSources: SampleSourceInfo[];
 
-  export let sortBy: string | null = null;
-  export let sortOrder: string | null = null;
-  export let sortSourceId: number | null = null;
-
-  function onHeader(header: string, sourceId: number | null) {
-    dispatch("toggle", {
-      header: header,
-      sourceId: sourceId,
-    });
+  interface Props {
+    stickyHeader?: boolean;
+    showAllSelfColumns?: boolean;
+    sampleSources: SampleSourceInfo[];
+    sortBy?: string | null;
+    sortOrder?: string | null;
+    sortSourceId?: number | null;
+    toggle?: (header: string, sourceId: number | null) => void;
+    children?: import("svelte").Snippet;
   }
 
-  const dispatch = createEventDispatcher();
+  let {
+    stickyHeader = false,
+    showAllSelfColumns = true,
+    sampleSources,
+    sortBy = null,
+    sortOrder = null,
+    sortSourceId = null,
+    toggle,
+    children,
+  }: Props = $props();
+
+  function onHeader(header: string, sourceId: number | null) {
+    toggle?.(header, sourceId);
+  }
 </script>
 
 <table>
@@ -36,8 +44,8 @@
   <thead class:sticky={stickyHeader}>
     <tr>
       <td
-        on:keypress={() => onHeader("name", null)}
-        on:click={() => onHeader("name", null)}
+        onkeypress={() => onHeader("name", null)}
+        onclick={() => onHeader("name", null)}
       >
         <div class="function-head">
           <span>Function Name</span>
@@ -47,15 +55,15 @@
               'ascending'
                 ? 'up'
                 : 'down'}"
-            />
+            ></span>
           {/if}
         </div>
       </td>
       {#each sampleSources as source}
         {#if source.hasStacks}
           <td
-            on:keypress={() => onHeader("total_samples", source.id)}
-            on:click={() => onHeader("total_samples", source.id)}
+            onkeypress={() => onHeader("total_samples", source.id)}
+            onclick={() => onHeader("total_samples", source.id)}
           >
             <div class="total-samples-head">
               <span>{source.name} (total)</span>
@@ -65,15 +73,15 @@
                   'ascending'
                     ? 'up'
                     : 'down'}"
-                />
+                ></span>
               {/if}
             </div>
           </td>
         {/if}
         {#if source.hasStacks || showAllSelfColumns}
           <td
-            on:keypress={() => onHeader("self_samples", source.id)}
-            on:click={() => onHeader("self_samples", source.id)}
+            onkeypress={() => onHeader("self_samples", source.id)}
+            onclick={() => onHeader("self_samples", source.id)}
           >
             <div class="self-samples-head">
               <span>{source.name} (self)</span>
@@ -83,7 +91,7 @@
                   'ascending'
                     ? 'up'
                     : 'down'}"
-                />
+                ></span>
               {/if}
             </div>
           </td>
@@ -95,7 +103,7 @@
     </tr>
   </thead>
   <tbody>
-    <slot></slot>
+    {@render children?.()}
   </tbody>
 </table>
 

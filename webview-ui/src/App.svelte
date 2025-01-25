@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { SvelteMap } from 'svelte/reactivity';
 
   import { vscode } from "./utilities/vscode";
   import type {
@@ -35,25 +36,25 @@
     vsCodeButton(),
   );
 
-  let totalTime: TimeSpan | null = null;
-  let sampleSources: SampleSourceInfo[] = [];
-  let sourceInfo: InfoEntry[] | null = null;
-  let sessionInfo: InfoEntry[] | null = null;
-  let systemInfo: InfoEntry[] | null = null;
-  let processes: ProcessInfo[] | null = null;
+  let totalTime: TimeSpan | null = $state(null);
+  let sampleSources: SampleSourceInfo[] = $state([]);
+  let sourceInfo: InfoEntry[] | null = $state(null);
+  let sessionInfo: InfoEntry[] | null = $state(null);
+  let systemInfo: InfoEntry[] | null = $state(null);
+  let processes: ProcessInfo[] | null = $state(null);
 
-  let activeHotSourceIndex: number | null = null;
-  let activeMainSourceIndex: number | null = null;
+  let activeHotSourceIndex: number | null = $state(null);
+  let activeMainSourceIndex: number | null = $state(null);
 
-  let activeFunction: FunctionId | null = null;
+  let activeFunction: FunctionId | null = $state(null);
 
-  let activeCallerCalleeNode: CallerCalleeNode | null = null;
+  let activeCallerCalleeNode: CallerCalleeNode | null = $state(null);
 
-  let callTreeRoots: Map<number, CallTreeNode | null> | null = null;
+  let callTreeRoots: SvelteMap<number, CallTreeNode | null> | null = $state(null);
 
-  let hotFunctions: ProcessFunction[] | null = null;
+  let hotFunctions: ProcessFunction[] | null = $state(null);
 
-  let activeSelectionFilter: TimeSpan | null = null;
+  let activeSelectionFilter: TimeSpan | null = $state(null);
 
   onMount(() => {
     vscode.postMessage({ command: "retrieveSampleSources" });
@@ -78,7 +79,7 @@
         command: "navigateToFunction",
         processKey: activeFunction.processKey,
         functionId: activeFunction.functionId,
-        sampleSources: sampleSources,
+        sampleSources: $state.snapshot(sampleSources),
         sourceIndex: activeMainSourceIndex,
       });
     }
@@ -203,7 +204,7 @@
                 : null,
           });
           if (callTreeRoots === null) {
-            callTreeRoots = new Map<number, CallTreeNode>();
+            callTreeRoots = new SvelteMap<number, CallTreeNode>();
           }
           callTreeRoots.set(process.key, null);
         }
@@ -222,11 +223,9 @@
           }
         }
       }
-      callTreeRoots = callTreeRoots;
     }
 
     if (event.data.type === "filterSet") {
-      console.log(event.data.data);
       if (
         event.data.data["minTime"] === null &&
         event.data.data["maxTime"] === null
@@ -242,7 +241,7 @@
       activeCallerCalleeNode = null;
       callTreeRoots = null;
       hotFunctions = null;
-      callTreeRoots = new Map<number, CallTreeNode>();
+      callTreeRoots = new SvelteMap<number, CallTreeNode>();
       if (processes !== null) {
         for (const process of processes) {
           vscode.postMessage({
@@ -280,7 +279,6 @@
     if (event.data.type === "callTreeHotPath") {
       if (callTreeRoots === null) return;
       callTreeRoots.set(event.data.data["processKey"], event.data.data["root"]);
-      callTreeRoots = callTreeRoots;
     }
 
     if (event.data.type === "hottestFunctions") {
@@ -309,13 +307,13 @@
     <vscode-panel-view id="summary-view">
       <section>
         <Summary
-          on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
-          on:filter={(event) =>
+          navigate={(functionId) => changeActiveFunction(functionId)}
+          filter={(timeSpan, excludedProcesses, excludedThreads) =>
             applyFilter(
-              event.detail.minTime,
-              event.detail.maxTime,
-              event.detail.excludedProcesses,
-              event.detail.excludedThreads,
+              timeSpan ? timeSpan.start : null,
+              timeSpan ? timeSpan.end : null,
+              excludedProcesses,
+              excludedThreads,
             )}
           {processes}
           {totalTime}
@@ -333,7 +331,7 @@
     <vscode-panel-view id="call-tree-view">
       <section>
         <CallTree
-          on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
+          navigate={(functionId) => changeActiveFunction(functionId)}
           roots={callTreeRoots}
           hotSourceIndex={activeHotSourceIndex}
           {sampleSources}
@@ -345,7 +343,7 @@
     <vscode-panel-view id="caller-callee-view">
       <section>
         <CallerCallee
-          on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
+          navigate={(functionId) => changeActiveFunction(functionId)}
           node={activeCallerCalleeNode}
           activeSourceIndex={activeMainSourceIndex}
         />
@@ -355,7 +353,7 @@
     <vscode-panel-view id="functions-view">
       <section>
         <FunctionsPage
-          on:navigate={(event) => changeActiveFunction(event.detail.functionId)}
+          navigate={(functionId) => changeActiveFunction(functionId)}
           {sampleSources}
           {processes}
           {activeFunction}

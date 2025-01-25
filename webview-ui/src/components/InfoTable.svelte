@@ -2,7 +2,11 @@
   import type { InfoEntry } from "../utilities/types";
   import Placeholder from "./Placeholder.svelte";
 
-  export let entries: InfoEntry[] | null;
+  interface Props {
+    entries: InfoEntry[] | null;
+  }
+
+  let { entries }: Props = $props();
 </script>
 
 <table>

@@ -1,12 +1,16 @@
 <script lang="ts">
-  export let width: number = 50;
-  export let range: number = 20;
+  interface Props {
+    width?: number;
+    range?: number;
+  }
+
+  let { width = 50, range = 20 }: Props = $props();
 </script>
 
 <div
   class="placeholder"
   style="width: {width + (Math.random() - 0.5) * range}%;"
-/>
+></div>
 
 <style>
   .placeholder {

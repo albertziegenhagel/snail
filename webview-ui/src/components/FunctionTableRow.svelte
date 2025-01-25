@@ -1,38 +1,55 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { getModuleDisplayName } from "../utilities/path";
   import type { FunctionNode, SampleSourceInfo } from "../utilities/types";
   import Placeholder from "./Placeholder.svelte";
 
-  export let node: FunctionNode | null;
-  export let isHot: boolean = false;
-  export let isActive: boolean = false;
-  export let showAllSelfColumns: boolean = true;
-  export let sampleSources: SampleSourceInfo[];
+  interface Props {
+    node: FunctionNode | null;
+    isHot?: boolean;
+    isActive?: boolean;
+    showAllSelfColumns?: boolean;
+    sampleSources: SampleSourceInfo[];
+    functionNamePrefix?: import('svelte').Snippet;
+    totalSamplesPrefix?: import('svelte').Snippet;
+    selfSamplesPrefix?: import('svelte').Snippet;
+    modulesPrefix?: import('svelte').Snippet;
+    navigate?: (functionId: number) => void;
+  }
 
-  const dispatch = createEventDispatcher();
+  let {
+    node,
+    isHot = false,
+    isActive = false,
+    showAllSelfColumns = true,
+    sampleSources,
+    functionNamePrefix,
+    totalSamplesPrefix,
+    selfSamplesPrefix,
+    modulesPrefix,
+    navigate
+  }: Props = $props();
 
   function navigateToSelf() {
-    dispatch("navigate", {
-      functionId: node!.id,
-    });
+    if(node !== null) {
+    navigate?.(node.id);
+    }
   }
 </script>
 
 <tr class:active={isActive}>
   <td>
     <div class="function-name">
-      <slot name="function-name-prefix" />
+      {@render functionNamePrefix?.()}
       {#if isHot}
-        <div class="hot"><i class="codicon codicon-flame" /></div>
+        <div class="hot"><i class="codicon codicon-flame"></i></div>
       {/if}
       {#if node !== null}
         {#if node.type === "function"}
           <span
             role="button"
             tabindex="0"
-            on:click={() => navigateToSelf()}
-            on:keypress={() => navigateToSelf()}
+            onclick={() => navigateToSelf()}
+            onkeypress={() => navigateToSelf()}
             class="function-name-text clickable"
             title={node.name}
           >
@@ -50,7 +67,7 @@
     {#if source.hasStacks}
       <td>
         <div class="total-samples">
-          <slot name="total-samples-prefix" />
+          {@render totalSamplesPrefix?.()}
           {#if node !== null}
             <span class="total-samples-text"
               >{node.hits[sourceIndex].totalSamples} ({node.hits[
@@ -66,7 +83,7 @@
     {#if source.hasStacks || showAllSelfColumns}
       <td>
         <div class="self-samples">
-          <slot name="self-samples-prefix" />
+          {@render selfSamplesPrefix?.()}
           {#if node !== null}
             <span class="self-samples-text"
               >{node.hits[sourceIndex].selfSamples} ({node.hits[
@@ -82,7 +99,7 @@
   {/each}
   <td>
     <div class="modules">
-      <slot name="modules-prefix" />
+      {@render modulesPrefix?.()}
       {#if node !== null}
         <span class="modules-text" title={node.module}
           >{getModuleDisplayName(node.module)}</span
