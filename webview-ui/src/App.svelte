@@ -17,7 +17,6 @@
   import {
     provideVSCodeDesignSystem,
     vsCodeProgressRing,
-    vsCodeButton,
   } from "@vscode/webview-ui-toolkit";
 
   import "@vscode-elements/elements";
@@ -29,7 +28,6 @@
 
   provideVSCodeDesignSystem().register(
     vsCodeProgressRing(),
-    vsCodeButton(),
   );
 
   let totalTime: TimeSpan | null = $state(null);
