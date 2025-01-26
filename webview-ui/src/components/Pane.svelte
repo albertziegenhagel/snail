@@ -1,7 +1,13 @@
 <script lang="ts">
-  export let title: string;
+  interface Props {
+    title: string;
+    toolbar?: import('svelte').Snippet;
+    children?: import('svelte').Snippet;
+  }
 
-  let expanded: boolean = true;
+  let { title, toolbar, children }: Props = $props();
+
+  let expanded: boolean = $state(true);
 
   const toggleExpansion = () => {
     expanded = !expanded;
@@ -12,8 +18,8 @@
   <div
     role="button"
     tabindex="0"
-    on:click={toggleExpansion}
-    on:keypress={toggleExpansion}
+    onclick={toggleExpansion}
+    onkeypress={toggleExpansion}
     class="pane-header"
     aria-expanded={expanded}
   >
@@ -27,11 +33,11 @@
     </h3>
 
     <div class="toolbar">
-      <slot name="toolbar"></slot>
+      {@render toolbar?.()}
     </div>
   </div>
   <div class="pane-body" class:collapsed={!expanded}>
-    <slot></slot>
+    {@render children?.()}
   </div>
 </div>
 

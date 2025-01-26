@@ -1,49 +1,67 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import type { TimeSpan, ProcessInfo } from "../utilities/types";
 
-  import type { TimeSpan, ProcessInfo, FunctionId } from "../utilities/types";
-
-  const dispatch = createEventDispatcher();
-
-  export let displayTime: TimeSpan | null = null;
-
-  export let processes: ProcessInfo[] | null = null;
-
-  // export let activeFunction: FunctionId = null;
-
-  export let activeSelectionFilter: TimeSpan | null = null;
-
-  export let selection: TimeSpan | null = null;
-
-  export let uncheckedProcesses: number[] = [];
-
-  export let uncheckedThreads: number[] = [];
-
-  let expanded: boolean[] | null = null;
-  let checked: { process: boolean; threads: boolean[] }[] | null = null;
-
-  $: if (
-    processes !== null &&
-    (expanded === null || expanded.length != processes.length)
-  ) {
-    expanded = new Array<boolean>(processes.length).fill(false);
-
-    checked = [];
-    for (let process of processes) {
-      checked.push({
-        process: true,
-        threads: new Array<boolean>(process.threads.length).fill(true),
-      });
-    }
+  interface Props {
+    displayTime: TimeSpan | null;
+    processes: ProcessInfo[] | null;
+    activeSelectionFilter: TimeSpan | null;
+    selection: TimeSpan | null;
+    uncheckedProcesses: number[];
+    uncheckedThreads: number[];
+    select?: (selection: TimeSpan | null) => void;
   }
+
+  let {
+    displayTime = null,
+    processes = null,
+    activeSelectionFilter = null,
+    selection = $bindable(null),
+    uncheckedProcesses = $bindable([]),
+    uncheckedThreads = $bindable([]),
+    select,
+  }: Props = $props();
+
+  let expanded: boolean[] | null = $state(null);
+  let checked: { process: boolean; threads: boolean[] }[] | null = $state(null);
+
+  $effect(() => {
+    // initialize expanded array when processes changed
+    if (processes !== null) {
+      if (expanded === null || expanded.length != processes.length) {
+        expanded = new Array<boolean>(processes.length).fill(false);
+      }
+    } else {
+      expanded = null;
+    }
+  });
+
+  $effect(() => {
+    // initialize checked array when processes changed
+    if (processes !== null) {
+      if (checked === null || checked.length != processes.length) {
+        let result: { process: boolean; threads: boolean[] }[] = [];
+        for (let process of processes) {
+          result.push({
+            process: true,
+            threads: new Array<boolean>(process.threads.length).fill(true),
+          });
+        }
+        checked = result;
+      }
+    } else {
+      checked = null;
+    }
+  });
 
   const ticks = 10;
 
-  let delta: number = 1;
-
-  $: if (displayTime !== null) {
-    delta = (displayTime.end - displayTime.start) / 10;
-  }
+  let delta: number = $derived.by(() => {
+    if (displayTime !== null) {
+      return (displayTime.end - displayTime.start) / 10;
+    } else {
+      return 1;
+    }
+  });
 
   const toggleExpansion = (i: number) => {
     if (expanded === null) return;
@@ -157,11 +175,11 @@
 
     selectionStartTime = null;
 
-    dispatch("selection", selection);
+    select?.(selection);
   }
 </script>
 
-<svelte:window on:mousemove={moveSelect} on:mouseup={endSelect} />
+<svelte:window onmousemove={moveSelect} onmouseup={endSelect} />
 
 <table>
   <thead>
@@ -169,7 +187,7 @@
       <td>
         <div>Source</div>
       </td>
-      <td class="ticks-data" on:mousedown={startSelect}>
+      <td class="ticks-data" onmousedown={startSelect}>
         <div class="ticks-line" bind:this={ticksLine}>
           {#if displayTime !== null}
             {#each { length: ticks } as _, i}
@@ -200,7 +218,7 @@
                 displayTime.start) /
                 (displayTime.end - displayTime.start)) *
                 100}%;"
-            />
+            ></span>
             <span
               class="selection-filter"
               style="width: {(((activeSelectionFilter.end
@@ -212,7 +230,7 @@
                 (displayTime.end - displayTime.start)) *
                 100}%;"
             >
-              <span class="selection-filter-inner" />
+              <span class="selection-filter-inner"></span>
             </span>
             <span
               class="selection-filter-post"
@@ -222,7 +240,7 @@
                   : displayTime.end)) /
                 (displayTime.end - displayTime.start)) *
                 100}%;"
-            />
+            ></span>
           </div>
         {/if}
         {#if selection !== null && displayTime !== null}
@@ -232,21 +250,21 @@
               style="width: {((selection.start - displayTime.start) /
                 (displayTime.end - displayTime.start)) *
                 100}%;"
-            />
+            ></span>
             <span
               class="selection"
               style="width: {((selection.end - selection.start) /
                 (displayTime.end - displayTime.start)) *
                 100}%;"
             >
-              <span class="selection-inner" />
+              <span class="selection-inner"></span>
             </span>
             <span
               class="selection-post"
               style="width: {((displayTime.end - selection.end) /
                 (displayTime.end - displayTime.start)) *
                 100}%;"
-            />
+            ></span>
           </div>
         {/if}
       </td>
@@ -261,26 +279,26 @@
               <div
                 role="button"
                 tabindex="0"
-                on:click={() => toggleExpansion(processIndex)}
-                on:keypress={() => toggleExpansion(processIndex)}
+                onclick={() => toggleExpansion(processIndex)}
+                onkeypress={() => toggleExpansion(processIndex)}
                 class="twistie codicon codicon-chevron-down"
                 class:collapsible={process.threads.length > 0}
                 class:collapsed={!expanded[processIndex]}
                 aria-expanded={expanded[processIndex]}
-              />
+              ></div>
               <div class="input-group">
                 <input
                   type="checkbox"
                   class="checkbox-control codicon"
                   class:codicon-check={checked[processIndex].process}
                   bind:checked={checked[processIndex].process}
-                  on:change={() => toggleProcessFilter(processIndex)}
+                  onchange={() => toggleProcessFilter(processIndex)}
                 />
                 {process.name} (PID: {process.osId})
               </div>
             </div>
           </td>
-          <td class="time-data" on:mousedown={startSelect}>
+          <td class="time-data" onmousedown={startSelect}>
             <div class="time-line">
               <div class="time-line-bar">
                 <span
@@ -292,21 +310,21 @@
                     displayTime.start) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
-                />
+                ></span>
                 <span
                   class="time-active"
                   style="width: {((Math.min(process.endTime, displayTime.end) -
                     Math.max(process.startTime, displayTime.start)) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
-                />
+                ></span>
                 <span
                   class="time-idle"
                   style="width: {((displayTime.end -
                     Math.min(process.endTime, displayTime.end)) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
-                />
+                ></span>
               </div>
             </div>
             {#if activeSelectionFilter !== null}
@@ -319,7 +337,7 @@
                     displayTime.start) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
-                />
+                ></span>
                 <span
                   class="selection-filter"
                   style="width: {(((activeSelectionFilter.end
@@ -331,7 +349,7 @@
                     (displayTime.end - displayTime.start)) *
                     100}%;"
                 >
-                  <span class="selection-filter-inner" />
+                  <span class="selection-filter-inner"></span>
                 </span>
                 <span
                   class="selection-filter-post"
@@ -341,7 +359,7 @@
                       : displayTime.end)) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
-                />
+                ></span>
               </div>
             {/if}
             {#if selection !== null}
@@ -351,21 +369,21 @@
                   style="width: {((selection.start - displayTime.start) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
-                />
+                ></span>
                 <span
                   class="selection"
                   style="width: {((selection.end - selection.start) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
                 >
-                  <span class="selection-inner" />
+                  <span class="selection-inner"></span>
                 </span>
                 <span
                   class="selection-post"
                   style="width: {((displayTime.end - selection.end) /
                     (displayTime.end - displayTime.start)) *
                     100}%;"
-                />
+                ></span>
               </div>
             {/if}
           </td>
@@ -381,7 +399,7 @@
                   <div
                     style="padding-left: calc(var(--design-unit) * 2px);"
                     class="twistie codicon codicon-chevron-down"
-                  />
+                  ></div>
                   <div class="input-group">
                     <input
                       class="checkbox-control codicon"
@@ -391,14 +409,14 @@
                       type="checkbox"
                       bind:checked={checked[processIndex].threads[threadIndex]}
                       disabled={!checked[processIndex].process}
-                      on:change={() =>
+                      onchange={() =>
                         toggleThreadFilter(processIndex, threadIndex)}
                     />
                     {thread.name === null ? "[thread]" : thread.name} (TID: {thread.osId})
                   </div>
                 </div>
               </td>
-              <td class="time-data" on:mousedown={startSelect}>
+              <td class="time-data" onmousedown={startSelect}>
                 <div class="time-line">
                   <div class="time-line-bar">
                     <span
@@ -410,7 +428,7 @@
                         displayTime.start) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
-                    />
+                    ></span>
                     <span
                       class="time-active"
                       style="width: {((Math.min(
@@ -420,14 +438,14 @@
                         Math.max(thread.startTime, displayTime.start)) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
-                    />
+                    ></span>
                     <span
                       class="time-idle"
                       style="width: {((displayTime.end -
                         Math.min(thread.endTime, displayTime.end)) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
-                    />
+                    ></span>
                   </div>
                 </div>
                 {#if activeSelectionFilter !== null}
@@ -443,7 +461,7 @@
                         displayTime.start) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
-                    />
+                    ></span>
                     <span
                       class="selection-filter"
                       style="width: {(((activeSelectionFilter.end
@@ -458,7 +476,7 @@
                         (displayTime.end - displayTime.start)) *
                         100}%;"
                     >
-                      <span class="selection-filter-inner" />
+                      <span class="selection-filter-inner"></span>
                     </span>
                     <span
                       class="selection-filter-post"
@@ -468,7 +486,7 @@
                           : displayTime.end)) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
-                    />
+                    ></span>
                   </div>
                 {/if}
                 {#if selection !== null}
@@ -478,21 +496,21 @@
                       style="width: {((selection.start - displayTime.start) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
-                    />
+                    ></span>
                     <span
                       class="selection"
                       style="width: {((selection.end - selection.start) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
                     >
-                      <span class="selection-inner" />
+                      <span class="selection-inner"></span>
                     </span>
                     <span
                       class="selection-post"
                       style="width: {((displayTime.end - selection.end) /
                         (displayTime.end - displayTime.start)) *
                         100}%;"
-                    />
+                    ></span>
                   </div>
                 {/if}
               </td>
@@ -683,6 +701,7 @@
     visibility: hidden;
   }
   .twistie:before {
+    display: block;
     cursor: pointer;
   }
   .twistie.collapsed:before {

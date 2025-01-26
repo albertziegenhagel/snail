@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import FunctionTableTreeNode from "./FunctionTableTreeNode.svelte";
 
   import { vscode } from "../utilities/vscode";
   import type {
@@ -9,39 +9,55 @@
   } from "../utilities/types";
 
   import FunctionTableRow from "./FunctionTableRow.svelte";
+  import exp from "constants";
 
-  export let processKey: number;
-  export let hotSourceIndex: number | null;
-  export let node: CallTreeNode | null;
-  export let level: number;
-  export let activeFunction: FunctionId | null;
-  export let sampleSources: SampleSourceInfo[];
-
-  const dispatch = createEventDispatcher();
-
-  $: hasChildren =
-    node !== null && (node.children === null || node.children.length > 0);
-
-  let expanded: boolean | null = null;
-
-  $: if (node !== null && node.children !== null && hotSourceIndex !== null) {
-    node.children.sort((a, b) => {
-      return -(
-        a.hits[hotSourceIndex].totalSamples -
-        b.hits[hotSourceIndex].totalSamples
-      );
-    });
-    if (expanded === null) {
-      expanded = node.isHot;
-    }
+  interface Props {
+    processKey: number;
+    hotSourceIndex: number | null;
+    node: CallTreeNode | null;
+    level: number;
+    activeFunction: FunctionId | null;
+    sampleSources: SampleSourceInfo[];
+    navigate?: (functionId: FunctionId) => void;
   }
 
-  $: isHot = node !== null && node.isHot;
-  $: isActive =
+  let {
+    processKey,
+    hotSourceIndex,
+    node = $bindable(),
+    level,
+    activeFunction,
+    sampleSources,
+    navigate,
+  }: Props = $props();
+
+  let hasChildren = $derived(
+    node !== null && (node.children === null || node.children.length > 0),
+  );
+
+  let expanded: boolean | null = $state(null);
+
+  $effect(() => {
+    if (node !== null && node.children !== null && hotSourceIndex !== null) {
+      node.children.sort((a, b) => {
+        return -(
+          a.hits[hotSourceIndex].totalSamples -
+          b.hits[hotSourceIndex].totalSamples
+        );
+      });
+      if (expanded === null) {
+        expanded = node.isHot;
+      }
+    }
+  });
+
+  let isHot = $derived(node !== null && node.isHot);
+  let isActive = $derived(
     node !== null &&
-    activeFunction != null &&
-    processKey == activeFunction.processKey &&
-    node.functionId == activeFunction.functionId;
+      activeFunction != null &&
+      processKey == activeFunction.processKey &&
+      node.functionId == activeFunction.functionId,
+  );
 
   const toggleExpansion = () => {
     if (node === null) return;
@@ -61,18 +77,14 @@
 
   function navigateToSelf() {
     if (node === null) return;
-    dispatch("navigate", {
-      functionId: {
-        processKey: processKey,
-        functionId: node.functionId,
-      },
+    navigate?.({
+      processKey: processKey,
+      functionId: node.functionId,
     });
   }
 
   function navigateToChild(functionId: FunctionId) {
-    dispatch("navigate", {
-      functionId: functionId,
-    });
+    navigate?.(functionId);
   }
 
   window.addEventListener("message", (event) => {
@@ -92,33 +104,35 @@
 </script>
 
 <FunctionTableRow
-  on:navigate={(event) => navigateToSelf()}
+  navigate={() => navigateToSelf()}
   {node}
   {isHot}
   {isActive}
   {sampleSources}
   showAllSelfColumns={false}
 >
-  <span slot="function-name-prefix" class="function-name-prefix">
-    <div
-      role="button"
-      tabindex="0"
-      on:click={toggleExpansion}
-      on:keypress={toggleExpansion}
-      style="padding-left: calc(var(--design-unit) * {level * 2}px);"
-      class="twistie codicon codicon-chevron-down"
-      class:collapsible={hasChildren}
-      class:collapsed={!expanded}
-      aria-expanded={expanded}
-    />
-  </span>
+  {#snippet functionNamePrefix()}
+    <span class="function-name-prefix">
+      <div
+        role="button"
+        tabindex="0"
+        onclick={toggleExpansion}
+        onkeypress={toggleExpansion}
+        style="padding-left: calc(var(--design-unit) * {level * 2}px);"
+        class="twistie codicon codicon-chevron-down"
+        class:collapsible={hasChildren}
+        class:collapsed={!expanded}
+        aria-expanded={expanded}
+      ></div>
+    </span>
+  {/snippet}
 </FunctionTableRow>
 
 {#if expanded && node !== null}
   {#if node.children !== null}
     {#each node.children as child}
-      <svelte:self
-        on:navigate={(event) => navigateToChild(event.detail.functionId)}
+      <FunctionTableTreeNode
+        navigate={(functionId) => navigateToChild(functionId)}
         {processKey}
         node={child}
         {sampleSources}
@@ -129,9 +143,10 @@
     {/each}
   {:else}
     <!-- Placeholder -->
-    <svelte:self
+    <FunctionTableTreeNode
       {processKey}
       node={null}
+      activeFunction={null}
       {sampleSources}
       {hotSourceIndex}
       level={level + 1}

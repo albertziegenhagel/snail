@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import type {
     CallTreeNode,
     FunctionId,
@@ -9,40 +8,28 @@
   import FunctionTable from "./components/FunctionTable.svelte";
   import FunctionTableTreeNode from "./components/FunctionTableTreeNode.svelte";
 
-  export let roots: Map<number, CallTreeNode | null> | null = null;
-  export let sampleSources: SampleSourceInfo[];
-  export let hotSourceIndex: number | null = null;
-  export let activeFunction: FunctionId | null = null;
+  interface Props {
+    roots: Map<number, CallTreeNode | null> | null;
+    sampleSources: SampleSourceInfo[];
+    hotSourceIndex: number | null;
+    activeFunction: FunctionId | null;
+    navigate: (functionId: FunctionId) => void;
+  }
 
-  const dispatch = createEventDispatcher();
-
-  // $: {
-  //   if(processes !== null) {
-  //     for (const process of processes) {
-  //       if(process.key in roots) continue;
-  //       vscode.postMessage({ command: "retrieveCallTreeHotPath", processKey: process.key });
-  //     }
-  //     // TODO: remove old roots
-  //   }
-  //   else {
-  //     roots = {}
-  //   }
-  // }
-
-  // window.addEventListener("message", (event) => {
-  //   if(event.data.type !== "callTreeHotPath") return;
-  //   roots[event.data.data['processKey']] = event.data.data['root'];
-  // });
+  let {
+    roots = null,
+    sampleSources,
+    hotSourceIndex = null,
+    activeFunction = null,
+    navigate,
+  }: Props = $props();
 </script>
 
 <FunctionTable stickyHeader={true} {sampleSources} showAllSelfColumns={false}>
   {#if roots !== null}
     {#each [...roots] as [processKey, root]}
       <FunctionTableTreeNode
-        on:navigate={(event) =>
-          dispatch("navigate", {
-            functionId: event.detail.functionId,
-          })}
+        navigate={(functionId) => navigate(functionId)}
         {processKey}
         {hotSourceIndex}
         {sampleSources}
@@ -52,6 +39,6 @@
       />
     {/each}
   {:else}
-    <vscode-progress-ring />
+    <vscode-progress-ring></vscode-progress-ring>
   {/if}
 </FunctionTable>

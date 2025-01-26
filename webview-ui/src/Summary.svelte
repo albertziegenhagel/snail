@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import { run, stopPropagation } from "svelte/legacy";
+
   import Pane from "./components/Pane.svelte";
   import FunctionTable from "./components/FunctionTable.svelte";
   import FunctionTableRow from "./components/FunctionTableRow.svelte";
@@ -14,52 +15,76 @@
     InfoEntry,
   } from "./utilities/types";
 
-  export let processes: ProcessInfo[] | null = null;
-  export let totalTime: TimeSpan | null = null;
-  export let sampleSources: SampleSourceInfo[];
-  export let sessionInfo: InfoEntry[] | null = null;
-  export let systemInfo: InfoEntry[] | null = null;
-  export let sourceInfo: InfoEntry[] | null = null;
+  interface Props {
+    processes?: ProcessInfo[] | null;
+    totalTime?: TimeSpan | null;
+    sampleSources: SampleSourceInfo[];
+    sessionInfo?: InfoEntry[] | null;
+    systemInfo?: InfoEntry[] | null;
+    sourceInfo?: InfoEntry[] | null;
+    hotFunctions?: ProcessFunction[] | null;
+    activeFunction: FunctionId | null;
+    activeSelectionFilter?: TimeSpan | null;
+    navigate: (functionId: FunctionId) => void;
+    filter: (
+      timeSpan: TimeSpan | null,
+      excludedProcesses: number[],
+      excludedThreads: number[],
+    ) => void;
+  }
 
-  export let hotFunctions: ProcessFunction[] | null = null;
-  export let activeFunction: FunctionId | null;
+  let {
+    processes = null,
+    totalTime = null,
+    sampleSources,
+    sessionInfo = null,
+    systemInfo = null,
+    sourceInfo = null,
+    hotFunctions = null,
+    activeFunction,
+    activeSelectionFilter = null,
+    navigate,
+    filter,
+  }: Props = $props();
 
-  export let activeSelectionFilter: TimeSpan | null = null;
-
-  let activeSelection: TimeSpan | null;
+  let activeSelection: TimeSpan | null = $state(null);
 
   let wipSelectionFilter: TimeSpan | null = null;
 
-  let excludedProcesses: number[] = [];
-  let excludedThreads: number[] = [];
+  let excludedProcesses: number[] = $state([]);
+  let excludedThreads: number[] = $state([]);
 
-  let activeExcludedProcesses: number[] = [];
-  let activeExcludedThreads: number[] = [];
+  let activeExcludedProcesses: number[] = $state([]);
+  let activeExcludedThreads: number[] = $state([]);
 
-  const dispatch = createEventDispatcher();
+  let hasSelection = $derived(activeSelection !== null);
 
-  $: hasSelection = activeSelection !== null;
-
-  $: hasSelectionFilter =
+  const hasSelectionFilter = $derived(
     activeSelectionFilter !== null &&
-    (activeSelectionFilter.start !== null ||
-      activeSelectionFilter.end !== null);
+      (activeSelectionFilter.start !== null ||
+        activeSelectionFilter.end !== null),
+  );
 
-  $: displayTime = totalTime;
+  let displayTime: TimeSpan | null = $state(totalTime);
+  $effect(() => {
+    displayTime = totalTime;
+  });
 
-  $: isZoomed =
+  let isZoomed = $derived(
     totalTime !== null &&
-    displayTime !== null &&
-    (displayTime.start > totalTime.start || displayTime.end < totalTime.end);
+      displayTime !== null &&
+      (displayTime.start > totalTime.start || displayTime.end < totalTime.end),
+  );
 
   function arrayEquals(a: number[], b: number[]) {
     return a.length === b.length && a.every((val, index) => val === b[index]);
   }
 
-  $: hasFilterChanges =
+  let hasFilterChanges = $derived(
     hasSelection ||
-    !arrayEquals(excludedProcesses, activeExcludedProcesses) ||
-    !arrayEquals(excludedThreads, activeExcludedThreads);
+      !arrayEquals(excludedProcesses, activeExcludedProcesses) ||
+      !arrayEquals(excludedThreads, activeExcludedThreads),
+  );
 
   function clearSelection() {
     activeSelection = null;
@@ -79,12 +104,11 @@
     } else {
       wipSelectionFilter = null;
     }
-    dispatch("filter", {
-      minTime: wipSelectionFilter?.start,
-      maxTime: wipSelectionFilter?.end,
-      excludedProcesses: excludedProcesses,
-      excludedThreads: excludedThreads,
-    });
+    filter(
+      wipSelectionFilter,
+      $state.snapshot(excludedProcesses),
+      $state.snapshot(excludedThreads),
+    );
     activeExcludedProcesses = [...excludedProcesses];
     activeExcludedThreads = [...excludedThreads];
     zoomToSelection();
@@ -92,12 +116,11 @@
 
   function clearSelectionFilter() {
     wipSelectionFilter = null;
-    dispatch("filter", {
-      minTime: null,
-      maxTime: null,
-      excludedProcesses: excludedProcesses,
-      excludedThreads: excludedThreads,
-    });
+    filter(
+      wipSelectionFilter,
+      $state.snapshot(excludedProcesses),
+      $state.snapshot(excludedThreads),
+    );
     resetZoom();
   }
 
@@ -124,86 +147,86 @@
       bind:uncheckedThreads={excludedThreads}
     />
 
-    <div class="toolbar-buttons" slot="toolbar">
-      <vscode-button
-        role="button"
-        tabindex="0"
-        appearance="icon"
-        aria-label="Apply Filter"
-        title="Apply Filter"
-        disabled={!hasFilterChanges}
-        on:click|stopPropagation={applyFiler}
-        on:keypress|stopPropagation={applyFiler}
-      >
-        <span class="codicon codicon-filter"></span>
-      </vscode-button>
-      <vscode-button
-        role="button"
-        tabindex="0"
-        appearance="icon"
-        aria-label="Reset Selection Filter"
-        title="Reset Selection Filter"
-        disabled={!hasSelectionFilter}
-        on:click|stopPropagation={clearSelectionFilter}
-        on:keypress|stopPropagation={clearSelectionFilter}
-      >
-        <!-- <span class="codicon codicon-refresh"></span> -->
-        <span class="icon-group">
+    {#snippet toolbar()}
+      <div class="toolbar-buttons">
+        <vscode-button
+          role="button"
+          tabindex="0"
+          appearance="icon"
+          aria-label="Apply Filter"
+          title="Apply Filter"
+          disabled={!hasFilterChanges}
+          onclick={stopPropagation(applyFiler)}
+          onkeypress={stopPropagation(applyFiler)}
+        >
           <span class="codicon codicon-filter"></span>
-          <span class="icon-corner codicon codicon-error"></span>
-        </span>
-      </vscode-button>
+        </vscode-button>
+        <vscode-button
+          role="button"
+          tabindex="0"
+          appearance="icon"
+          aria-label="Reset Selection Filter"
+          title="Reset Selection Filter"
+          disabled={!hasSelectionFilter}
+          onclick={stopPropagation(clearSelectionFilter)}
+          onkeypress={stopPropagation(clearSelectionFilter)}
+        >
+          <!-- <span class="codicon codicon-refresh"></span> -->
+          <span class="icon-group">
+            <span class="codicon codicon-filter"></span>
+            <span class="icon-corner codicon codicon-error"></span>
+          </span>
+        </vscode-button>
 
-      <vscode-button
-        role="button"
-        tabindex="0"
-        appearance="icon"
-        aria-label="Clear Selection"
-        title="Clear Selection"
-        disabled={!hasSelection}
-        on:click|stopPropagation={clearSelection}
-        on:keypress|stopPropagation={clearSelection}
-      >
-        <span class="codicon codicon-clear-all"></span>
-      </vscode-button>
+        <vscode-button
+          role="button"
+          tabindex="0"
+          appearance="icon"
+          aria-label="Clear Selection"
+          title="Clear Selection"
+          disabled={!hasSelection}
+          onclick={stopPropagation(clearSelection)}
+          onkeypress={stopPropagation(clearSelection)}
+        >
+          <span class="codicon codicon-clear-all"></span>
+        </vscode-button>
 
-      <vscode-button
-        role="button"
-        tabindex="0"
-        appearance="icon"
-        aria-label="Zoom to Selection"
-        title="Zoom to Selection"
-        disabled={!hasSelection}
-        on:click|stopPropagation={zoomToSelection}
-        on:keypress|stopPropagation={zoomToSelection}
-      >
-        <span class="codicon codicon-zoom-in"></span>
-      </vscode-button>
-      <vscode-button
-        role="button"
-        tabindex="0"
-        appearance="icon"
-        aria-label="Reset Zoom"
-        title="Reset Zoom"
-        disabled={!isZoomed}
-        on:click|stopPropagation={resetZoom}
-        on:keypress|stopPropagation={resetZoom}
-      >
-        <span class="codicon codicon-zoom-out"></span>
-      </vscode-button>
-    </div>
+        <vscode-button
+          role="button"
+          tabindex="0"
+          appearance="icon"
+          aria-label="Zoom to Selection"
+          title="Zoom to Selection"
+          disabled={!hasSelection}
+          onclick={stopPropagation(zoomToSelection)}
+          onkeypress={stopPropagation(zoomToSelection)}
+        >
+          <span class="codicon codicon-zoom-in"></span>
+        </vscode-button>
+        <vscode-button
+          role="button"
+          tabindex="0"
+          appearance="icon"
+          aria-label="Reset Zoom"
+          title="Reset Zoom"
+          disabled={!isZoomed}
+          onclick={stopPropagation(resetZoom)}
+          onkeypress={stopPropagation(resetZoom)}
+        >
+          <span class="codicon codicon-zoom-out"></span>
+        </vscode-button>
+      </div>
+    {/snippet}
   </Pane>
   <Pane title="Hot spots">
-    <FunctionTable {sampleSources}>
+    <FunctionTable {sampleSources} toggle={(h, s) => {}}>
       {#if hotFunctions !== null}
         {#each hotFunctions as func}
           <FunctionTableRow
-            on:navigate={() =>
-              dispatch("navigate", {
-                functionId: {
-                  processKey: func.processKey,
-                  functionId: func.function.id,
-                },
+            navigate={() =>
+              navigate({
+                processKey: func.processKey,
+                functionId: func.function.id,
               })}
             node={func.function}
             isHot={true}

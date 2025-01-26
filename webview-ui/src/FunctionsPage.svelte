@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import type {
     ProcessInfo,
     FunctionId,
@@ -10,25 +9,19 @@
   import FunctionTableRow from "./components/FunctionTableRow.svelte";
   import FunctionTableProcessNode from "./components/FunctionTableProcessNode.svelte";
 
-  export let sampleSources: SampleSourceInfo[];
-  export let processes: ProcessInfo[] | null;
-  export let activeFunction: FunctionId | null = null;
-
-  let sortBy: string | null = null;
-  let sortOrder: string | null = null;
-  let sortSourceId: number | null = null;
-
-  $: if (sampleSources !== null) {
-    if (sortBy === null && sampleSources.length > 0) {
-      const timerSource = sampleSources.find(
-        (sourceInfo) =>
-          sourceInfo.name === "Timer" || sourceInfo.name.startsWith("cycles"),
-      );
-      let sortSource =
-        timerSource !== undefined ? timerSource : sampleSources[0];
-      toggleSortBySample("self_samples", sortSource.id);
-    }
+  interface Props {
+    sampleSources: SampleSourceInfo[];
+    processes: ProcessInfo[] | null;
+    activeFunction?: FunctionId | null;
+    navigate: (functionId: FunctionId) => void;
   }
+
+  let { sampleSources, processes, activeFunction = null, navigate }: Props = $props();
+
+  let sortBy: string | null = $state(null);
+  let sortOrder: string | null = $state(null);
+  let sortSourceId: number | null = $state(null);
+
 
   function toggleSortOrder() {
     if (sortOrder === "descending") {
@@ -57,15 +50,27 @@
     }
   }
 
-  const dispatch = createEventDispatcher();
+  $effect(() => {
+    if (sampleSources !== null) {
+      if (sortBy === null && sampleSources.length > 0) {
+        const timerSource = sampleSources.find(
+          (sourceInfo) =>
+            sourceInfo.name === "Timer" || sourceInfo.name.startsWith("cycles"),
+        );
+        let sortSource =
+          timerSource !== undefined ? timerSource : sampleSources[0];
+        toggleSortBySample("self_samples", sortSource.id);
+      }
+    }
+  });
 </script>
 
 <FunctionTable
-  on:toggle={(event) => {
-    if (event.detail.header === "name") {
+  toggle={(header, sourceId) => {
+    if (header === "name") {
       toggleSortByName();
     } else {
-      toggleSortBySample(event.detail.header, event.detail.sourceId);
+      toggleSortBySample(header, sourceId!);
     }
   }}
   stickyHeader={true}
@@ -77,10 +82,7 @@
   {#if processes !== null}
     {#each processes as process}
       <FunctionTableProcessNode
-        on:navigate={(event) =>
-          dispatch("navigate", {
-            functionId: event.detail.functionId,
-          })}
+        navigate={(functionId) => navigate(functionId)}
         {process}
         {sampleSources}
         {activeFunction}

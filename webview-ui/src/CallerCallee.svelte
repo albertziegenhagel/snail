@@ -1,21 +1,25 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import Placeholder from "./components/Placeholder.svelte";
   import { getModuleDisplayName } from "./utilities/path";
-  import type { CallerCalleeNode, FunctionNode } from "./utilities/types";
+  import type {
+    CallerCalleeNode,
+    FunctionNode,
+    FunctionId,
+  } from "./utilities/types";
 
-  export let node: CallerCalleeNode | null = null;
-  export let activeSourceIndex: number | null = null;
+  interface Props {
+    node?: CallerCalleeNode | null;
+    activeSourceIndex?: number | null;
+    navigate: (functionId: FunctionId) => void;
+  }
 
-  const dispatch = createEventDispatcher();
+  let { node = null, activeSourceIndex = null, navigate }: Props = $props();
 
   function navigateTo(func: FunctionNode) {
     if (node === null) return;
-    dispatch("navigate", {
-      functionId: {
-        processKey: node.processKey,
-        functionId: func.id,
-      },
+    navigate({
+      processKey: node.processKey,
+      functionId: func.id,
     });
   }
 </script>
@@ -50,10 +54,10 @@
             <div
               role="button"
               tabindex="0"
-              on:click={() => {
+              onclick={() => {
                 navigateTo(func);
               }}
-              on:keypress={() => {
+              onkeypress={() => {
                 navigateTo(func);
               }}
               class="caller-callee-node-group-entry callee"
@@ -90,7 +94,7 @@
     </div>
   </div>
   <div class="arrow">
-    <i class="codicon codicon-arrow-right" />
+    <i class="codicon codicon-arrow-right"></i>
   </div>
   <div class="caller-callee-node current-function-node">
     <h4 class="caller-callee-node-title">CURRENT FUNCTION</h4>
@@ -160,7 +164,7 @@
     </div>
   </div>
   <div class="arrow">
-    <i class="codicon codicon-arrow-right" />
+    <i class="codicon codicon-arrow-right"></i>
   </div>
   <div class="caller-callee-node callees-node">
     <h4 class="caller-callee-node-title">CALLED FUNCTIONS</h4>
@@ -175,10 +179,10 @@
             <div
               role="button"
               tabindex="0"
-              on:click={() => {
+              onclick={() => {
                 navigateTo(func);
               }}
-              on:keypress={() => {
+              onkeypress={() => {
                 navigateTo(func);
               }}
               class="caller-callee-node-group-entry caller"
