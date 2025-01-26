@@ -97,7 +97,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
 
                     <link rel="stylesheet" type="text/css" href="${stylesUri}"/>
-                    <link rel="stylesheet" type="text/css" href="${codiconsUri}"/>
+                    <link rel="stylesheet" type="text/css" href="${codiconsUri}" id="vscode-codicon-stylesheet"/>
                 </head>
                 <body>
                     <script type="module" nonce="${nonce}" src="${scriptUri}"></script>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { SvelteMap } from 'svelte/reactivity';
+  import "@vscode-elements/elements";
 
   import { vscode } from "./utilities/vscode";
   import type {
@@ -14,27 +15,10 @@
     InfoEntry,
   } from "./utilities/types";
 
-  import {
-    provideVSCodeDesignSystem,
-    vsCodePanels,
-    vsCodePanelView,
-    vsCodePanelTab,
-    vsCodeProgressRing,
-    vsCodeButton,
-  } from "@vscode/webview-ui-toolkit";
-
   import Summary from "./Summary.svelte";
   import CallTree from "./CallTree.svelte";
   import CallerCallee from "./CallerCallee.svelte";
   import FunctionsPage from "./FunctionsPage.svelte";
-
-  provideVSCodeDesignSystem().register(
-    vsCodePanels(),
-    vsCodePanelTab(),
-    vsCodePanelView(),
-    vsCodeProgressRing(),
-    vsCodeButton(),
-  );
 
   let totalTime: TimeSpan | null = $state(null);
   let sampleSources: SampleSourceInfo[] = $state([]);
@@ -298,14 +282,14 @@
 </script>
 
 <main>
-  <vscode-panels>
-    <vscode-panel-tab id="summary-tab">Summary</vscode-panel-tab>
-    <vscode-panel-tab id="call-tree-tab">Call Tree</vscode-panel-tab>
-    <vscode-panel-tab id="caller-callee-tab">Caller/Callee</vscode-panel-tab>
-    <vscode-panel-tab id="functions-tab">Functions</vscode-panel-tab>
+  <vscode-tabs panel>
+    <vscode-tab-header slot="header" id="summary-tab">Summary</vscode-tab-header>
+    <vscode-tab-header slot="header" id="call-tree-tab">Call Tree</vscode-tab-header>
+    <vscode-tab-header slot="header" id="caller-callee-tab">Caller/Callee</vscode-tab-header>
+    <vscode-tab-header slot="header" id="functions-tab">Functions</vscode-tab-header>
 
-    <vscode-panel-view id="summary-view">
-      <section>
+    <vscode-tab-panel id="summary-view">
+      <vscode-scrollable>
         <Summary
           navigate={(functionId) => changeActiveFunction(functionId)}
           filter={(timeSpan, excludedProcesses, excludedThreads) =>
@@ -325,11 +309,11 @@
           {activeFunction}
           {activeSelectionFilter}
         />
-      </section>
-    </vscode-panel-view>
+      </vscode-scrollable>
+    </vscode-tab-panel>
 
-    <vscode-panel-view id="call-tree-view">
-      <section>
+    <vscode-tab-panel id="call-tree-view">
+      <vscode-scrollable>
         <CallTree
           navigate={(functionId) => changeActiveFunction(functionId)}
           roots={callTreeRoots}
@@ -337,10 +321,10 @@
           {sampleSources}
           {activeFunction}
         />
-      </section>
-    </vscode-panel-view>
+      </vscode-scrollable>
+    </vscode-tab-panel>
 
-    <vscode-panel-view id="caller-callee-view">
+    <vscode-tab-panel id="caller-callee-view" class="full-panel">
       <section>
         <CallerCallee
           navigate={(functionId) => changeActiveFunction(functionId)}
@@ -348,47 +332,54 @@
           activeSourceIndex={activeMainSourceIndex}
         />
       </section>
-    </vscode-panel-view>
+    </vscode-tab-panel>
 
-    <vscode-panel-view id="functions-view">
-      <section>
+    <vscode-tab-panel id="functions-view">
+      <vscode-scrollable>
         <FunctionsPage
           navigate={(functionId) => changeActiveFunction(functionId)}
           {sampleSources}
           {processes}
           {activeFunction}
         />
-      </section>
-    </vscode-panel-view>
+      </vscode-scrollable>
+    </vscode-tab-panel>
 
-    <!-- <vscode-panel-view id="flame-graph-view">
+    <!-- <vscode-tab-panel id="flame-graph-view">
       flame graph.
-    </vscode-panel-view> -->
-  </vscode-panels>
+    </vscode-tab-panel> -->
+  </vscode-tabs>
 </main>
 
 <style>
+  :global(:root) {
+    --design-unit: 4;
+  }
+
   main {
     height: 100%;
-    padding: 0 8px;
   }
-  vscode-panels {
+  vscode-tabs {
     height: 100%;
+    --vscode-panel-background: var(--background);
+    display: flex;
+    flex-direction: column;
   }
-  vscode-panel-tab {
+  vscode-tab-header {
     text-transform: uppercase;
   }
-  /* :global(vscode-panels) :global(.tablist) {
+  vscode-tab-panel {
     background-color: var(--background);
-    position: sticky;
-    top: 0;
-  } */
-  vscode-panel-view {
-    height: 100%;
-    padding-left: calc(var(--design-unit) * 1px);
-    padding-right: calc(var(--design-unit) * 1px);
+    flex: 1;
+    overflow: auto;
+    padding: 0 8px;
   }
-  vscode-panel-view > section {
+  vscode-scrollable {
+    height: 100%;
+  }
+
+  section {
+    height: 100%;
     display: flex;
     flex-direction: column;
     width: 100%;

@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { run, stopPropagation } from "svelte/legacy";
-
   import Pane from "./components/Pane.svelte";
   import FunctionTable from "./components/FunctionTable.svelte";
   import FunctionTableRow from "./components/FunctionTableRow.svelte";
   import TimeLine from "./components/TimeLine.svelte";
   import InfoTable from "./components/InfoTable.svelte";
+  import ActionIcon from "./components/ActionIcon.svelte";
   import type {
     FunctionId,
     ProcessFunction,
@@ -149,72 +148,55 @@
 
     {#snippet toolbar()}
       <div class="toolbar-buttons">
-        <vscode-button
-          role="button"
-          tabindex="0"
-          appearance="icon"
-          aria-label="Apply Filter"
-          title="Apply Filter"
-          disabled={!hasFilterChanges}
-          onclick={stopPropagation(applyFiler)}
-          onkeypress={stopPropagation(applyFiler)}
-        >
-          <span class="codicon codicon-filter"></span>
-        </vscode-button>
-        <vscode-button
-          role="button"
-          tabindex="0"
-          appearance="icon"
-          aria-label="Reset Selection Filter"
-          title="Reset Selection Filter"
+        <div class="toolbar-button">
+          <ActionIcon
+            disabled={!hasFilterChanges}
+            label="Apply Filter"
+            onclick={(e) => { e.stopPropagation(); applyFiler(); }}
+            >
+            <span class="codicon codicon-filter"></span>
+          </ActionIcon>
+        </div>
+        <div class="toolbar-button">
+        <ActionIcon
+          label="Reset Selection Filter"
           disabled={!hasSelectionFilter}
-          onclick={stopPropagation(clearSelectionFilter)}
-          onkeypress={stopPropagation(clearSelectionFilter)}
+          onclick={(e) => { e.stopPropagation(); clearSelectionFilter(); }}
         >
           <!-- <span class="codicon codicon-refresh"></span> -->
           <span class="icon-group">
             <span class="codicon codicon-filter"></span>
             <span class="icon-corner codicon codicon-error"></span>
           </span>
-        </vscode-button>
-
-        <vscode-button
-          role="button"
-          tabindex="0"
-          appearance="icon"
-          aria-label="Clear Selection"
-          title="Clear Selection"
+        </ActionIcon>
+      </div>
+      <div class="toolbar-button">
+        <ActionIcon
+          label="Clear Selection"
           disabled={!hasSelection}
-          onclick={stopPropagation(clearSelection)}
-          onkeypress={stopPropagation(clearSelection)}
+          onclick={(e) => { e.stopPropagation(); clearSelection(); }}
         >
           <span class="codicon codicon-clear-all"></span>
-        </vscode-button>
-
-        <vscode-button
-          role="button"
-          tabindex="0"
-          appearance="icon"
-          aria-label="Zoom to Selection"
-          title="Zoom to Selection"
+        </ActionIcon>
+      </div>
+      <div class="toolbar-button">
+        <ActionIcon
+          label="Zoom to Selection"
           disabled={!hasSelection}
-          onclick={stopPropagation(zoomToSelection)}
-          onkeypress={stopPropagation(zoomToSelection)}
+          onclick={(e) => { e.stopPropagation(); zoomToSelection(); }}
         >
           <span class="codicon codicon-zoom-in"></span>
-        </vscode-button>
-        <vscode-button
-          role="button"
-          tabindex="0"
-          appearance="icon"
-          aria-label="Reset Zoom"
-          title="Reset Zoom"
+        </ActionIcon>
+      </div>
+      <div class="toolbar-button">
+        <ActionIcon
+          label="Reset Zoom"
           disabled={!isZoomed}
-          onclick={stopPropagation(resetZoom)}
-          onkeypress={stopPropagation(resetZoom)}
+          onclick={(e) => { e.stopPropagation(); resetZoom(); }}
         >
           <span class="codicon codicon-zoom-out"></span>
-        </vscode-button>
+        </ActionIcon>
+      </div>
       </div>
     {/snippet}
   </Pane>
@@ -258,13 +240,19 @@
 <style>
   .toolbar-buttons {
     display: flex;
-    gap: 4px;
+    align-items: center;
+    justify-content: flex-end;
     margin-left: 2px;
     margin-right: 2px;
   }
 
+  .toolbar-button {
+    margin-right: 4px;
+  }
+
   .icon-group {
     position: relative;
+    height: 16px;
   }
 
   span.icon-corner {
