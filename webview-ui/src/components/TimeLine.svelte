@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { TimeSpan, ProcessInfo } from "../utilities/types";
+  import Checkbox from "./Checkbox.svelte";
 
   interface Props {
     displayTime: TimeSpan | null;
@@ -287,13 +288,10 @@
                 aria-expanded={expanded[processIndex]}
               ></div>
               <div class="input-group">
-                <input
-                  type="checkbox"
-                  class="checkbox-control codicon"
-                  class:codicon-check={checked[processIndex].process}
+                <Checkbox
                   bind:checked={checked[processIndex].process}
                   onchange={() => toggleProcessFilter(processIndex)}
-                />
+                ></Checkbox>
                 {process.name} (PID: {process.osId})
               </div>
             </div>
@@ -401,17 +399,11 @@
                     class="twistie codicon codicon-chevron-down"
                   ></div>
                   <div class="input-group">
-                    <input
-                      class="checkbox-control codicon"
-                      class:codicon-check={checked[processIndex].threads[
-                        threadIndex
-                      ]}
-                      type="checkbox"
+                    <Checkbox
                       bind:checked={checked[processIndex].threads[threadIndex]}
-                      disabled={!checked[processIndex].process}
                       onchange={() =>
                         toggleThreadFilter(processIndex, threadIndex)}
-                    />
+                    ></Checkbox>
                     {thread.name === null ? "[thread]" : thread.name} (TID: {thread.osId})
                   </div>
                 </div>
@@ -555,29 +547,6 @@
   .input-group {
     display: flex;
     align-items: center;
-  }
-
-  .checkbox-control {
-    position: relative;
-    width: calc(var(--design-unit) * 4px);
-    height: calc(var(--design-unit) * 4px);
-    box-sizing: border-box;
-    border-radius: calc(var(--checkbox-corner-radius) * 1px);
-    border: calc(var(--border-width) * 1px) solid var(--checkbox-border);
-    background: var(--checkbox-background);
-    outline: none;
-    cursor: pointer;
-    appearance: none;
-    margin: 0 calc(var(--design-unit) * 1.5px) 0 0;
-    font-size: 11pt;
-  }
-
-  .checkbox-control:active {
-    background: var(--checkbox-background);
-    border-color: var(--focus-border);
-  }
-  .checkbox-control:focus-visible {
-    border: calc(var(--border-width) * 1px) solid var(--focus-border);
   }
 
   .time-data {

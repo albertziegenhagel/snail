@@ -9,7 +9,6 @@
   } from "../utilities/types";
 
   import FunctionTableRow from "./FunctionTableRow.svelte";
-  import exp from "constants";
 
   interface Props {
     processKey: number;

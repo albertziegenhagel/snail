@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { SvelteMap } from 'svelte/reactivity';
+  import "@vscode-elements/elements";
 
   import { vscode } from "./utilities/vscode";
   import type {
@@ -14,21 +15,10 @@
     InfoEntry,
   } from "./utilities/types";
 
-  import {
-    provideVSCodeDesignSystem,
-    vsCodeProgressRing,
-  } from "@vscode/webview-ui-toolkit";
-
-  import "@vscode-elements/elements";
-
   import Summary from "./Summary.svelte";
   import CallTree from "./CallTree.svelte";
   import CallerCallee from "./CallerCallee.svelte";
   import FunctionsPage from "./FunctionsPage.svelte";
-
-  provideVSCodeDesignSystem().register(
-    vsCodeProgressRing(),
-  );
 
   let totalTime: TimeSpan | null = $state(null);
   let sampleSources: SampleSourceInfo[] = $state([]);
@@ -362,6 +352,10 @@
 </main>
 
 <style>
+  :global(:root) {
+    --design-unit: 4;
+  }
+
   main {
     height: 100%;
   }
@@ -371,9 +365,6 @@
     display: flex;
     flex-direction: column;
   }
-  /* :global(vscode-tabs > .header.panel) {
-    background-color: var(--background);
-  } */
   vscode-tab-header {
     text-transform: uppercase;
   }
