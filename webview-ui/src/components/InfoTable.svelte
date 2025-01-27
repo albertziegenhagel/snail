@@ -51,11 +51,11 @@
     font-weight: 600;
     width: 1%;
     white-space: nowrap;
+    align-content: baseline;
   }
   .value-data {
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .key-column {
     width: 20%;
