@@ -135,7 +135,7 @@
   }
 </script>
 
-<div class="container">
+<vscode-scrollable>
   <Pane title="Timeline">
     <TimeLine
       bind:selection={activeSelection}
@@ -235,9 +235,14 @@
   <Pane title="System Info">
     <InfoTable entries={systemInfo} />
   </Pane>
-</div>
+</vscode-scrollable>
 
 <style>
+  vscode-scrollable {
+    height: 100%;
+    overflow: hidden;
+  }
+
   .toolbar-buttons {
     display: flex;
     align-items: center;
