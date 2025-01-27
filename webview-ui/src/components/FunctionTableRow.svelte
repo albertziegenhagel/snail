@@ -66,6 +66,11 @@
   {#each sampleSources as source, sourceIndex}
     {#if source.hasStacks}
       <td>
+        {#if node !== null}
+          <div class="percent-bar-container">
+            <div class="percent-bar" style="width: calc({node.hits[sourceIndex].totalPercent.toFixed(1)}%)"></div>
+          </div>
+        {/if}
         <div class="total-samples">
           {@render totalSamplesPrefix?.()}
           {#if node !== null}
@@ -82,6 +87,11 @@
     {/if}
     {#if source.hasStacks || showAllSelfColumns}
       <td>
+        {#if node !== null}
+          <div class="percent-bar-container">
+            <div class="percent-bar" style="width: calc({node.hits[sourceIndex].selfPercent.toFixed(1)}%)"></div>
+          </div>
+        {/if}
         <div class="self-samples">
           {@render selfSamplesPrefix?.()}
           {#if node !== null}
@@ -132,6 +142,10 @@
     text-decoration: underline;
   }
 
+  td {
+    position: relative;
+  }
+
   td > div {
     display: flex;
     margin-left: 2px;
@@ -153,5 +167,23 @@
     align-items: center;
     color: var(--vscode-notificationsErrorIcon-foreground);
     padding-right: 4px;
+  }
+
+  .percent-bar-container {
+    position: absolute;
+    width: calc(100% - 4px);
+    height: 100%;
+    right: 2px;
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    margin: 0;
+  }
+  .percent-bar {
+    position: absolute;
+    border-radius: 4px;
+    height: calc(100% - 6px);
+    background-color: var(--vscode-progressBar-background);
+    opacity: 0.15;
   }
 </style>
