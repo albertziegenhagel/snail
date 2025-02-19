@@ -174,7 +174,7 @@
     "@vscode/test-electron": "^2.3.9",
     "eslint": "^8.28.0",
     "glob": "^8.1.0",
-    "mocha": "^10.1.0",
+    "mocha": "^10.8.2",
     "ts-loader": "^9.4.2",
     "typescript": "^5.5.0",
     "webpack": "^5.94.0",
