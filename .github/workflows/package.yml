@@ -64,7 +64,7 @@ jobs:
           vsce package --target ${{ matrix.target }} --pre-release
 
       - name: Upload binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with: 
           name: snail-${{ matrix.target }}
           path: ${{ github.workspace }}/*.vsix
