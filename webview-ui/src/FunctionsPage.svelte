@@ -8,6 +8,8 @@
   import FunctionTable from "./components/FunctionTable.svelte";
   import FunctionTableRow from "./components/FunctionTableRow.svelte";
   import FunctionTableProcessNode from "./components/FunctionTableProcessNode.svelte";
+  import type { VscodeScrollable } from "@vscode-elements/elements";
+  import { onMount } from "svelte";
 
   interface Props {
     sampleSources: SampleSourceInfo[];
@@ -16,12 +18,16 @@
     navigate: (functionId: FunctionId) => void;
   }
 
-  let { sampleSources, processes, activeFunction = null, navigate }: Props = $props();
+  let {
+    sampleSources,
+    processes,
+    activeFunction = null,
+    navigate,
+  }: Props = $props();
 
   let sortBy: string | null = $state(null);
   let sortOrder: string | null = $state(null);
   let sortSourceId: number | null = $state(null);
-
 
   function toggleSortOrder() {
     if (sortOrder === "descending") {
@@ -63,39 +69,63 @@
       }
     }
   });
+
+  let scrollable: VscodeScrollable | undefined = $state();
+
+  onMount(() => {
+    let sheet = new CSSStyleSheet();
+    sheet.replaceSync(`.content { overflow: unset; } .shadow { z-index: 2; }`);
+    scrollable?.shadowRoot?.adoptedStyleSheets.push(sheet);
+  });
 </script>
 
-<FunctionTable
-  toggle={(header, sourceId) => {
-    if (header === "name") {
-      toggleSortByName();
-    } else {
-      toggleSortBySample(header, sourceId!);
-    }
-  }}
-  stickyHeader={true}
-  {sampleSources}
-  {sortBy}
-  {sortOrder}
-  {sortSourceId}
->
-  {#if processes !== null}
-    {#each processes as process}
-      <FunctionTableProcessNode
-        navigate={(functionId) => navigate(functionId)}
-        {process}
-        {sampleSources}
-        {activeFunction}
-        {sortBy}
-        {sortOrder}
-        {sortSourceId}
-      />
-    {/each}
-  {:else}
-    <!-- Placeholders -->
-    <FunctionTableRow node={null} isHot={false} {sampleSources} />
-    <FunctionTableRow node={null} isHot={false} {sampleSources} />
-    <FunctionTableRow node={null} isHot={false} {sampleSources} />
-    <FunctionTableRow node={null} isHot={false} {sampleSources} />
-  {/if}
-</FunctionTable>
+<vscode-scrollable bind:this={scrollable}>
+  <FunctionTable
+    toggle={(header, sourceId) => {
+      if (header === "name") {
+        toggleSortByName();
+      } else {
+        toggleSortBySample(header, sourceId!);
+      }
+    }}
+    stickyHeader={true}
+    {scrollable}
+    {sampleSources}
+    {sortBy}
+    {sortOrder}
+    {sortSourceId}
+  >
+    {#if processes !== null}
+      {#each processes as process}
+        <FunctionTableProcessNode
+          navigate={(functionId) => navigate(functionId)}
+          {process}
+          {sampleSources}
+          {activeFunction}
+          {sortBy}
+          {sortOrder}
+          {sortSourceId}
+        />
+      {/each}
+    {:else}
+      <!-- Placeholders -->
+      <FunctionTableRow node={null} isHot={false} {sampleSources} />
+      <FunctionTableRow node={null} isHot={false} {sampleSources} />
+      <FunctionTableRow node={null} isHot={false} {sampleSources} />
+      <FunctionTableRow node={null} isHot={false} {sampleSources} />
+    {/if}
+  </FunctionTable>
+  <div class="scrollbar-hack"></div>
+</vscode-scrollable>
+
+<style>
+  vscode-scrollable {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .scrollbar-hack {
+    visibility: hidden;
+    z-index: 99;
+  }
+</style>

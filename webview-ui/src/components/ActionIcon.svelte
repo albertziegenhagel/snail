@@ -14,6 +14,7 @@
 <button
   class="action-button"
   aria-label={label}
+  title={label}
   disabled={disabled}
   onclick={(event) => onclick?.(event)}
 >
