@@ -43,12 +43,18 @@
 
   let expanded: boolean | null = $state(null);
 
-  function loadMore() {
+  let clearOnNextReceive = false;
+
+  function loadMore(clearOnReceive : boolean) {
     const useSortBy = sortBy === null ? "name" : sortBy;
     const useSortOrder = sortOrder === null ? "ascending" : sortOrder;
     waitingForMore = true;
+    if(clearOnNextReceive && !clearOnReceive) {
+      functions = null;
+    }
     const nextPageIndex =
-      functions === null ? 0 : Math.ceil(functions.length / pageSize);
+      (functions === null || clearOnReceive) ? 0 : Math.ceil(functions.length / pageSize);
+    clearOnNextReceive = clearOnReceive;
     vscode.postMessage({
       command: "retrieveFunctionsPage",
       sortBy: useSortBy,
@@ -67,13 +73,13 @@
       expanded = !expanded;
     }
     if (expanded && functions === null) {
-      loadMore();
+      loadMore(false);
     }
   };
 
   function loadAll() {
     loadingAll = true;
-    loadMore();
+    loadMore(false);
   }
 
   function navigateToFunction(functionId: number) {
@@ -90,12 +96,13 @@
 
     const newFunctions = event.data.data["functions"];
 
-    if (functions === null) {
+    if (functions === null || clearOnNextReceive) {
       functions = newFunctions;
     } else {
       functions = functions.concat(newFunctions);
     }
 
+    clearOnNextReceive = false;
     canHaveMore = newFunctions.length == pageSize;
 
     if (!loadingAll || !canHaveMore) {
@@ -104,16 +111,18 @@
     }
 
     if (canHaveMore && loadingAll) {
-      loadMore();
+      loadMore(false);
     }
   });
   $effect(() => {
     // reload functions on sort change
+    sortBy;
+    sortOrder;
+    sortSourceId;
     if (sortBy !== null || sortOrder !== null || sortSourceId !== null) {
       untrack(() => {
-        functions = null;
         if (expanded) {
-          loadMore();
+          loadMore(true);
         }
       });
     }
@@ -222,7 +231,7 @@
               ></div>
             </span>
             <span class="load-more"
-              ><a href="#top" onclick={() => loadMore()}>more</a></span
+              ><a href="#top" onclick={() => loadMore(false)}>more</a></span
             >
             <span class="load-all"
               ><a href="#top" onclick={() => loadAll()}>all</a></span

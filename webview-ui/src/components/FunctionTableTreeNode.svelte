@@ -99,6 +99,7 @@
       });
     }
     node.children = event.data.data["children"];
+    node = node; // Trigger update of the element
   });
 </script>
 

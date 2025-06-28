@@ -15,8 +15,8 @@
     InfoEntry,
   } from "./utilities/types";
 
-  import Summary from "./Summary.svelte";
-  import CallTree from "./CallTree.svelte";
+  import Summary from "./SummaryPage.svelte";
+  import CallTree from "./CallTreePage.svelte";
   import CallerCallee from "./CallerCallee.svelte";
   import FunctionsPage from "./FunctionsPage.svelte";
 
@@ -289,39 +289,35 @@
     <vscode-tab-header slot="header" id="functions-tab">Functions</vscode-tab-header>
 
     <vscode-tab-panel id="summary-view">
-      <vscode-scrollable>
-        <Summary
-          navigate={(functionId) => changeActiveFunction(functionId)}
-          filter={(timeSpan, excludedProcesses, excludedThreads) =>
-            applyFilter(
-              timeSpan ? timeSpan.start : null,
-              timeSpan ? timeSpan.end : null,
-              excludedProcesses,
-              excludedThreads,
-            )}
-          {processes}
-          {totalTime}
-          {sampleSources}
-          {sessionInfo}
-          {systemInfo}
-          {sourceInfo}
-          {hotFunctions}
-          {activeFunction}
-          {activeSelectionFilter}
-        />
-      </vscode-scrollable>
+      <Summary
+        navigate={(functionId) => changeActiveFunction(functionId)}
+        filter={(timeSpan, excludedProcesses, excludedThreads) =>
+          applyFilter(
+            timeSpan ? timeSpan.start : null,
+            timeSpan ? timeSpan.end : null,
+            excludedProcesses,
+            excludedThreads,
+          )}
+        {processes}
+        {totalTime}
+        {sampleSources}
+        {sessionInfo}
+        {systemInfo}
+        {sourceInfo}
+        {hotFunctions}
+        {activeFunction}
+        {activeSelectionFilter}
+      />
     </vscode-tab-panel>
 
     <vscode-tab-panel id="call-tree-view">
-      <vscode-scrollable>
-        <CallTree
-          navigate={(functionId) => changeActiveFunction(functionId)}
-          roots={callTreeRoots}
-          hotSourceIndex={activeHotSourceIndex}
-          {sampleSources}
-          {activeFunction}
-        />
-      </vscode-scrollable>
+      <CallTree
+        navigate={(functionId) => changeActiveFunction(functionId)}
+        roots={callTreeRoots}
+        hotSourceIndex={activeHotSourceIndex}
+        {sampleSources}
+        {activeFunction}
+      />
     </vscode-tab-panel>
 
     <vscode-tab-panel id="caller-callee-view" class="full-panel">
@@ -335,14 +331,12 @@
     </vscode-tab-panel>
 
     <vscode-tab-panel id="functions-view">
-      <vscode-scrollable>
-        <FunctionsPage
-          navigate={(functionId) => changeActiveFunction(functionId)}
-          {sampleSources}
-          {processes}
-          {activeFunction}
-        />
-      </vscode-scrollable>
+      <FunctionsPage
+        navigate={(functionId) => changeActiveFunction(functionId)}
+        {sampleSources}
+        {processes}
+        {activeFunction}
+      />
     </vscode-tab-panel>
 
     <!-- <vscode-tab-panel id="flame-graph-view">
@@ -373,9 +367,6 @@
     flex: 1;
     overflow: auto;
     padding: 0 8px;
-  }
-  vscode-scrollable {
-    height: 100%;
   }
 
   section {
