@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import * as rpc from 'vscode-jsonrpc/node';
 import * as protocol from './protocol';
+import { randomUUID } from 'crypto';
 
 
 enum ClientState {
@@ -12,6 +13,92 @@ enum ClientState {
 	running,
 	stopping,
 	stopped,
+}
+
+class ProgressHandler {
+
+	public workDoneToken: protocol.ProgressToken;
+	public cancellationToken: vscode.CancellationToken;
+
+	private _listener: rpc.Disposable | undefined;
+
+	private _cancellationSource: vscode.CancellationTokenSource;
+	private _progress: vscode.Progress<{ message?: string; increment?: number}> | undefined;
+	private _reported: number = 0;
+	private _tokenDisposable: vscode.Disposable | undefined;
+	private _resolve: (() => void) | undefined;
+	private _reject: ((reason?: any) => void) | undefined;
+
+	public constructor(connection : rpc.MessageConnection)
+	{
+		this._cancellationSource = new vscode.CancellationTokenSource();
+
+		this.cancellationToken = this._cancellationSource.token;
+		this.workDoneToken = randomUUID();
+
+		this._listener = connection.onProgress(protocol.workDoneProgressType, this.workDoneToken, async (param) => {
+			switch (param.kind) {
+				case 'begin':
+					vscode.window.withProgress(
+						{
+							location: vscode.ProgressLocation.Window,
+							title: param.title,
+							cancellable: true
+						},
+						async (progress, vscodeToken) => {
+							this._tokenDisposable = vscodeToken.onCancellationRequested(() => this._cancellationSource.cancel());
+							this._progress = progress;
+							return new Promise<void>((resolve, reject) => {
+								this._resolve = resolve;
+								this._reject = reject;
+							});
+						}
+					);
+					break;
+				case 'report':
+					if(this._progress !== undefined && param.percentage !== undefined) {
+						const percentage =  Math.max(0, Math.min(param.percentage, 100));
+						const delta = Math.max(0, percentage - this._reported);
+						this._reported += delta;
+						this._progress !== undefined && this._progress.report({ message: param.message, increment: delta });
+					}
+					break;
+				case 'end':
+					this.done();
+					break;
+			}
+		});
+	}
+	
+	public cancel(): void {
+		this.cleanup();
+		if (this._reject !== undefined) {
+			this._reject();
+			this._resolve = undefined;
+			this._reject = undefined;
+		}
+	}
+
+	public done(): void {
+		this.cleanup();
+		if (this._resolve !== undefined) {
+			this._resolve();
+			this._resolve = undefined;
+			this._reject = undefined;
+		}
+	}
+
+	private cleanup(): void {
+		if (this._listener !== undefined) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+		if (this._tokenDisposable !== undefined) {
+			this._tokenDisposable.dispose();
+			this._tokenDisposable = undefined;
+		}
+		this._progress = undefined;
+	}
 }
 
 export class Client {
@@ -127,7 +214,7 @@ export class Client {
 
 		this._connection.sendNotification(protocol.setPdbSymbolFindOptionsNotificationType, {
 			searchDirs: pdbSearchDirs,
-			symbolCacheDir: pdbCacheDir.length > 0 ? pdbCacheDir : null,
+			symbolCacheDir: pdbCacheDir.length > 0 ? pdbCacheDir : undefined,
 			noDefaultUrls: pdbNoDefaultServerUrls,
 			symbolServerUrls: pdbServerUrls
 		});
@@ -155,7 +242,7 @@ export class Client {
 
 		this._connection.sendNotification(protocol.setDwarfSymbolFindOptionsNotificationType, {
 			searchDirs: dwarfSearchDirs,
-			debuginfodCacheDir: dwarfCacheDir.length > 0 ? dwarfCacheDir : null,
+			debuginfodCacheDir: dwarfCacheDir.length > 0 ? dwarfCacheDir : undefined,
 			noDefaultUrls: dwarfNoDefaultDebuginfodUrls,
 			debuginfodUrls: dwarfDebuginfodUrls
 		});
@@ -272,11 +359,14 @@ export class Client {
 			return Promise.reject<number>("Client is not connected");
 		}
 
+		const progressHandler = new ProgressHandler(this._connection);
 		const result = this._connection.sendRequest(protocol.readDocumentRequestType, {
-			filePath: filePath
-		});
+			filePath: filePath,
+			workDoneToken: progressHandler.workDoneToken
+		},
+			progressHandler.cancellationToken);
 
-		return result.then((data) => { return data.documentId; });
+		return result.then((data) => { progressHandler.done(); return data.documentId; });
 	}
 
 	public async closeDocument(id: number): Promise<void> {
@@ -305,7 +395,7 @@ export class Client {
 		return result.then((data) => { return data.processes; });
 	}
 
-	public async setSampleFilter(documentId: number, minTime: number | null, maxTime: number | null, excludedProcesses: number[], excludedThreads: number[]): Promise<null> {
+	public async setSampleFilter(documentId: number, minTime: number | undefined, maxTime: number | undefined, excludedProcesses: number[], excludedThreads: number[]): Promise<null> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<null>("Client is not connected");
@@ -329,13 +419,16 @@ export class Client {
 		}
 
 
+		const progressHandler = new ProgressHandler(this._connection);
 		const result = this._connection.sendRequest(protocol.retrieveHottestFunctionsRequestType, {
 			documentId: documentId,
 			sourceId: sourceId,
-			count: count
-		});
+			count: count,
+			workDoneToken: progressHandler.workDoneToken
+		},
+			progressHandler.cancellationToken);
 
-		return result.then((data) => { return data.functions; });
+		return result.then((data) => { progressHandler.done(); return data.functions; });
 	}
 
 	public async retrieveCallTreeHotPath(documentId: number, sourceId: number, processKey: number): Promise<protocol.CallTreeNode> {
@@ -344,23 +437,27 @@ export class Client {
 			return Promise.reject<protocol.CallTreeNode>("Client is not connected");
 		}
 
+		const progressHandler = new ProgressHandler(this._connection);
 		const result = this._connection.sendRequest(protocol.retrieveCallTreeHotPathRequestType, {
 			documentId: documentId,
 			sourceId: sourceId,
-			processKey: processKey
-		});
+			processKey: processKey,
+			workDoneToken: progressHandler.workDoneToken
+		},
+			progressHandler.cancellationToken);
 
-		return result.then((data) => { return data.root; });
+		return result.then((data) => { progressHandler.done(); return data.root; });
 	}
 
 
-	public async retrieveFunctionsPage(documentId: number, sortBy: protocol.FunctionsSortBy, sortOrder: protocol.SortDirection, sortSourceId: number | null, processKey: number,
+	public async retrieveFunctionsPage(documentId: number, sortBy: protocol.FunctionsSortBy, sortOrder: protocol.SortDirection, sortSourceId: number | undefined, processKey: number,
 		pageSize: number, pageIndex: number): Promise<protocol.FunctionNode[]> {
 		await this._started;
 		if (this._connection === undefined) {
 			return Promise.reject<protocol.FunctionNode[]>("Client is not connected");
 		}
 
+		const progressHandler = new ProgressHandler(this._connection);
 		const result = this._connection.sendRequest(protocol.retrieveFunctionsPageRequestType, {
 			documentId: documentId,
 			sortBy: sortBy,
@@ -368,10 +465,12 @@ export class Client {
 			sortSourceId: sortSourceId,
 			processKey: processKey,
 			pageSize: pageSize,
-			pageIndex: pageIndex
-		});
+			pageIndex: pageIndex,
+			workDoneToken: progressHandler.workDoneToken
+		},
+			progressHandler.cancellationToken);
 
-		return result.then((data) => { return data.functions; });
+		return result.then((data) => { progressHandler.done(); return data.functions; });
 	}
 
 	public async expandCallTreeNode(documentId: number, processKey: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
@@ -380,13 +479,16 @@ export class Client {
 			return Promise.reject<protocol.CallTreeNode[]>("Client is not connected");
 		}
 
+		const progressHandler = new ProgressHandler(this._connection);
 		const result = this._connection.sendRequest(protocol.expandCallTreeNodeRequestType, {
 			documentId: documentId,
 			processKey: processKey,
-			nodeId: nodeId
-		});
+			nodeId: nodeId,
+			workDoneToken: progressHandler.workDoneToken
+		},
+			progressHandler.cancellationToken);
 
-		return result.then((data) => { return data.children; });
+		return result.then((data) => { progressHandler.done(); return data.children; });
 	}
 
 
@@ -396,15 +498,18 @@ export class Client {
 			return Promise.reject<protocol.RetrieveCallersCalleesResult>("Client is not connected");
 		}
 
+		const progressHandler = new ProgressHandler(this._connection);
 		const result = this._connection.sendRequest(protocol.retrieveCallersCalleesRequestType, {
 			documentId: documentId,
 			sortSourceId: sortSourceId,
 			processKey: processKey,
 			functionId: functionId,
-			maxEntries: maxEntries
-		});
+			maxEntries: maxEntries,
+			workDoneToken: progressHandler.workDoneToken
+		},
+			progressHandler.cancellationToken);
 
-		return result;
+		return result.then((data) => { progressHandler.done(); return data; });
 	}
 
 	public async retrieveSessionInfo(documentId: number): Promise<protocol.SessionInfo> {
@@ -446,12 +551,15 @@ export class Client {
 			return Promise.reject<protocol.RetrieveLineInfoResult | null>("Client is not connected");
 		}
 
+		const progressHandler = new ProgressHandler(this._connection);
 		const result = this._connection.sendRequest(protocol.retrieveLineInfoRequestType, {
 			documentId: documentId,
 			processKey: processKey,
 			functionId: functionId,
-		});
+			workDoneToken: progressHandler.workDoneToken
+		},
+			progressHandler.cancellationToken);
 
-		return result;
+		return result.then((data) => { progressHandler.done(); return data; });
 	}
 }

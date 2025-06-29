@@ -19,6 +19,13 @@ export enum SortDirection {
     descending = "descending",
 }
 
+
+export type ProgressToken = rpc.ProgressToken;
+
+export interface WorkDoneProgressParams {
+    workDoneToken?: ProgressToken;
+}
+
 export interface SampleSourceInfo {
     id: number;
 
@@ -42,7 +49,7 @@ export interface ThreadInfo {
     // Time when the thread ended (in nanoseconds since the session start).
     endTime: number;
 
-    name: string | null;
+    name?: string;
 }
 
 export interface ProcessInfo {
@@ -115,7 +122,7 @@ export interface CallTreeNode {
 
     isHot: boolean;
 
-    children: CallTreeNode[] | null;
+    children?: CallTreeNode[];
 }
 
 export interface FunctionNode {
@@ -142,6 +149,44 @@ export interface LineHits {
     hits: HitCounts[];
 }
 
+export interface CancelRequestParams {
+    id: number | string;
+}
+
+export interface WorkDoneProgressBegin {
+    kind: 'begin';
+
+    title: string;
+
+    cancellable?: boolean;
+
+    message?: string;
+
+    percentage?: number;
+}
+
+export interface WorkDoneProgressReport {
+    kind: 'report';
+
+    cancellable?: boolean;
+
+    message?: string;
+
+    percentage?: number;
+}
+
+export interface WorkDoneProgressEnd {
+    kind: 'end';
+
+    message?: string;
+}
+
+export interface ProgressParams {
+    token: ProgressToken;
+
+    value: WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd;
+}
+
 export interface InitializeParams {
 }
 
@@ -149,7 +194,7 @@ export interface InitializeResult {
     success: boolean;
 }
 
-export interface ReadDocumentParams {
+export interface ReadDocumentParams extends WorkDoneProgressParams {
     filePath: string;
 }
 
@@ -197,7 +242,7 @@ export interface RetrieveProcessesResult {
     processes: ProcessInfo[];
 }
 
-export interface RetrieveHottestFunctionsParams {
+export interface RetrieveHottestFunctionsParams extends WorkDoneProgressParams {
     count: number;
 
     sourceId: number;
@@ -211,7 +256,7 @@ export interface RetrieveHottestFunctionsResult {
     functions: ProcessFunction[];
 }
 
-export interface RetrieveCallTreeHotPathParams {
+export interface RetrieveCallTreeHotPathParams extends WorkDoneProgressParams {
     sourceId: number;
 
     processKey: number;
@@ -225,7 +270,7 @@ export interface RetrieveCallTreeHotPathResult {
     root: CallTreeNode;
 }
 
-export interface RetrieveFunctionsPageParams {
+export interface RetrieveFunctionsPageParams extends WorkDoneProgressParams {
     sortBy: FunctionsSortBy;
 
     sortOrder: SortDirection;
@@ -240,14 +285,14 @@ export interface RetrieveFunctionsPageParams {
     // This should be an id that resulted from a call to `readDocument`.
     documentId: number;
 
-    sortSourceId: number | null;
+    sortSourceId?: number;
 }
 
 export interface RetrieveFunctionsPageResult {
     functions: FunctionNode[];
 }
 
-export interface ExpandCallTreeNodeParams {
+export interface ExpandCallTreeNodeParams extends WorkDoneProgressParams {
     nodeId: number;
 
     processKey: number;
@@ -261,7 +306,7 @@ export interface ExpandCallTreeNodeResult {
     children: CallTreeNode[];
 }
 
-export interface RetrieveCallersCalleesParams {
+export interface RetrieveCallersCalleesParams extends WorkDoneProgressParams {
     sortSourceId: number;
 
     maxEntries: number;
@@ -283,7 +328,7 @@ export interface RetrieveCallersCalleesResult {
     callees: FunctionNode[];
 }
 
-export interface RetrieveLineInfoParams {
+export interface RetrieveLineInfoParams extends WorkDoneProgressParams {
     functionId: number;
 
     processKey: number;
@@ -320,7 +365,7 @@ export interface SetPdbSymbolFindOptionsParams {
 
     symbolServerUrls: string[];
 
-    symbolCacheDir: string | null;
+    symbolCacheDir?: string;
 }
 
 export interface SetDwarfSymbolFindOptionsParams {
@@ -330,7 +375,7 @@ export interface SetDwarfSymbolFindOptionsParams {
 
     debuginfodUrls: string[];
 
-    debuginfodCacheDir: string | null;
+    debuginfodCacheDir?: string;
 }
 
 export interface SetModuleFiltersParams {
@@ -353,10 +398,10 @@ export interface SetSampleFiltersParams {
     documentId: number;
 
     // In nanoseconds since session start.
-    minTime: number | null;
+    minTime?: number;
 
     // In nanoseconds since session start.
-    maxTime: number | null;
+    maxTime?: number;
 }
 
 
@@ -402,6 +447,12 @@ export const retrieveLineInfoRequestType = new rpc.RequestType<RetrieveLineInfoP
 export const setSampleFiltersRequestType = new rpc.RequestType<SetSampleFiltersParams, null, void>('setSampleFilters');
 
 
+export const cancelRequestNotificationType = new rpc.NotificationType<CancelRequestParams>('$/cancelRequest');
+
+
+export const progressNotificationType = new rpc.NotificationType<ProgressParams>('$/progress');
+
+
 export const closeDocumentNotificationType = new rpc.NotificationType<CloseDocumentParams>('closeDocument');
 
 
@@ -418,3 +469,6 @@ export const setModuleFiltersNotificationType = new rpc.NotificationType<SetModu
 
 
 export const exitNotificationType = new rpc.NotificationType<void>('exit');
+
+
+export const workDoneProgressType = new rpc.ProgressType<WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd>();
