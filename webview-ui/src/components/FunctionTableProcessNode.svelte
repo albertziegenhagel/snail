@@ -17,7 +17,7 @@
     sampleSources: SampleSourceInfo[];
     sortBy: string | null;
     sortOrder: string | null;
-    sortSourceId: number | null;
+    sortSourceId: number | undefined;
     navigate: (functionId: FunctionId) => void;
   }
 
@@ -119,7 +119,7 @@
     sortBy;
     sortOrder;
     sortSourceId;
-    if (sortBy !== null || sortOrder !== null || sortSourceId !== null) {
+    if (sortBy !== null || sortOrder !== null || sortSourceId !== undefined) {
       untrack(() => {
         if (expanded) {
           loadMore(true);

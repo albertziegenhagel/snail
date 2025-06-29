@@ -70,8 +70,8 @@
   }
 
   function applyFilter(
-    minTime: number | null,
-    maxTime: number | null,
+    minTime: number | undefined,
+    maxTime: number | undefined,
     excludedProcesses: number[],
     excludedThreads: number[],
   ) {
@@ -293,8 +293,8 @@
         navigate={(functionId) => changeActiveFunction(functionId)}
         filter={(timeSpan, excludedProcesses, excludedThreads) =>
           applyFilter(
-            timeSpan ? timeSpan.start : null,
-            timeSpan ? timeSpan.end : null,
+            timeSpan ? timeSpan.start : undefined,
+            timeSpan ? timeSpan.end : undefined,
             excludedProcesses,
             excludedThreads,
           )}
