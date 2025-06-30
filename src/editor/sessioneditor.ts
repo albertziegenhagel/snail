@@ -322,11 +322,20 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                 functionHits.hits[sampleSourceIndex].totalSamples :
                 functionHits.hits[sampleSourceIndex].selfSamples) : 0;
 
-        let lastLine: number = 0;
+        let lastLine: number = 1;
         for (const lineInfo of functionHits.lineHits) {
+            if (lineInfo.lineNumber < 1) {
+                continue;
+            }
+            if (lineInfo.lineNumber - lastLine > 100000) {
+                // Protect against very large gaps. This is probably due to
+                // us getting an invalid line number (max int or similar).
+                lastLine = lineInfo.lineNumber + 1;
+                continue;
+            }
             for (let line = lastLine; line < lineInfo.lineNumber; line++) {
                 gutterDecorations.push({
-                    range: new vscode.Range(line, 0, line, 0),
+                    range: new vscode.Range(line - 1, 0, line - 1, 0),
                     renderOptions: {
                         before: {
                             contentText: "",
@@ -344,7 +353,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
             maxChars = Math.max(maxChars, text.length);
 
             gutterDecorations.push({
-                range: new vscode.Range(lineInfo.lineNumber, 0, lineInfo.lineNumber, 0),
+                range: new vscode.Range(lineInfo.lineNumber - 1, 0, lineInfo.lineNumber - 1, 0),
                 renderOptions: {
                     before: {
                         contentText: text,
@@ -353,7 +362,7 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
             });
             const index = Math.min(Math.trunc((lineSamples / functionSamples) * hitDecorations.length), hitDecorations.length - 1);
             hitDecorations[index].push(
-                new vscode.Range(lineInfo.lineNumber, 0, lineInfo.lineNumber, 0),
+                new vscode.Range(lineInfo.lineNumber - 1, 0, lineInfo.lineNumber - 1, 0),
             );
             lastLine = lineInfo.lineNumber + 1;
         }
@@ -408,9 +417,17 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
 
         const startOffset = -2; // function start is usually the open parenthesis
 
+        var startLine = functionHits.lineNumber - 1 + startOffset;
+        if (functionHits.lineHits.at(0)?.lineNumber !== undefined) {
+            startLine = Math.min(startLine, functionHits.lineHits.at(0)!.lineNumber - 1);
+        }
+        var endLine = functionHits.lineNumber - 1;
+        if (functionHits.lineHits.at(-1)?.lineNumber !== undefined) {
+            endLine = Math.max(endLine, functionHits.lineHits.at(-1)!.lineNumber - 1);
+        }
         editor.revealRange(new vscode.Range(
-            Math.min(Math.max(functionHits.lineNumber + startOffset, 0), functionHits.lineHits.at(0)?.lineNumber || functionHits.lineNumber), 0,
-            Math.max(functionHits.lineNumber, functionHits.lineHits.at(-1)?.lineNumber || functionHits.lineNumber), 0));
+            Math.max(Math.min(startLine, editor.document.lineCount), 0), 0,
+            Math.max(Math.min(endLine, editor.document.lineCount), 0), 0));
 
         for (let line = lastLine; line < editor.document.lineCount; line++) {
             gutterDecorations.push({
