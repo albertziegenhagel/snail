@@ -23,14 +23,13 @@ class ProgressHandler {
 	private _listener: rpc.Disposable | undefined;
 
 	private _cancellationSource: vscode.CancellationTokenSource;
-	private _progress: vscode.Progress<{ message?: string; increment?: number}> | undefined;
+	private _progress: vscode.Progress<{ message?: string; increment?: number }> | undefined;
 	private _reported: number = 0;
 	private _tokenDisposable: vscode.Disposable | undefined;
 	private _resolve: (() => void) | undefined;
 	private _reject: ((reason?: any) => void) | undefined;
 
-	public constructor(connection : rpc.MessageConnection)
-	{
+	public constructor(connection: rpc.MessageConnection) {
 		this._cancellationSource = new vscode.CancellationTokenSource();
 
 		this.cancellationToken = this._cancellationSource.token;
@@ -39,15 +38,17 @@ class ProgressHandler {
 		this._listener = connection.onProgress(protocol.workDoneProgressType, this.workDoneToken, async (param) => {
 			switch (param.kind) {
 				case 'begin':
+					this.cancel();
 					vscode.window.withProgress(
 						{
 							location: vscode.ProgressLocation.Window,
 							title: param.title,
-							cancellable: true
+							cancellable: param.cancellable
 						},
 						async (progress, vscodeToken) => {
 							this._tokenDisposable = vscodeToken.onCancellationRequested(() => this._cancellationSource.cancel());
 							this._progress = progress;
+							this._reported = 0;
 							return new Promise<void>((resolve, reject) => {
 								this._resolve = resolve;
 								this._reject = reject;
@@ -56,8 +57,8 @@ class ProgressHandler {
 					);
 					break;
 				case 'report':
-					if(this._progress !== undefined && param.percentage !== undefined) {
-						const percentage =  Math.max(0, Math.min(param.percentage, 100));
+					if (this._progress !== undefined && param.percentage !== undefined) {
+						const percentage = Math.max(0, Math.min(param.percentage, 100));
 						const delta = Math.max(0, percentage - this._reported);
 						this._reported += delta;
 						this._progress !== undefined && this._progress.report({ message: param.message, increment: delta });
@@ -69,30 +70,32 @@ class ProgressHandler {
 			}
 		});
 	}
-	
+
 	public cancel(): void {
-		this.cleanup();
 		if (this._reject !== undefined) {
 			this._reject();
-			this._resolve = undefined;
-			this._reject = undefined;
+			this.end();
 		}
 	}
 
 	public done(): void {
-		this.cleanup();
 		if (this._resolve !== undefined) {
 			this._resolve();
-			this._resolve = undefined;
-			this._reject = undefined;
+			this.end();
 		}
 	}
 
-	private cleanup(): void {
+	public cleanup(): void {
+		this.cancel();
 		if (this._listener !== undefined) {
 			this._listener.dispose();
 			this._listener = undefined;
 		}
+	}
+
+	private end(): void {
+		this._resolve = undefined;
+		this._reject = undefined;
 		if (this._tokenDisposable !== undefined) {
 			this._tokenDisposable.dispose();
 			this._tokenDisposable = undefined;
@@ -307,12 +310,13 @@ export class Client {
 
 		this._connection.listen();
 
-		// this._connection.onNotification();
+		// this._connection.trace(rpc.Trace.Verbose, {
+		// 	log: (message: string, data?: string) => {
+		// 		console.log(message, data);
+		// 	}
+		// });
 
-		// this._connection.trace();
-		// this._connection.trace();
-
-		const initializeResult = this._connection.sendRequest(protocol.initializeRequestType, {});
+		const initializeResult = await this._connection.sendRequest(protocol.initializeRequestType, {});
 
 		this._sendUpdatePdbOptions();
 		this._sendUpdateDwarfOptions();
@@ -366,7 +370,7 @@ export class Client {
 		},
 			progressHandler.cancellationToken);
 
-		return result.then((data) => { progressHandler.done(); return data.documentId; });
+		return result.then((data) => { progressHandler.cleanup(); return data.documentId; });
 	}
 
 	public async closeDocument(id: number): Promise<void> {
@@ -428,7 +432,7 @@ export class Client {
 		},
 			progressHandler.cancellationToken);
 
-		return result.then((data) => { progressHandler.done(); return data.functions; });
+		return result.then((data) => { progressHandler.cleanup(); return data.functions; });
 	}
 
 	public async retrieveCallTreeHotPath(documentId: number, sourceId: number, processKey: number): Promise<protocol.CallTreeNode> {
@@ -446,7 +450,7 @@ export class Client {
 		},
 			progressHandler.cancellationToken);
 
-		return result.then((data) => { progressHandler.done(); return data.root; });
+		return result.then((data) => { progressHandler.cleanup(); return data.root; });
 	}
 
 
@@ -470,7 +474,7 @@ export class Client {
 		},
 			progressHandler.cancellationToken);
 
-		return result.then((data) => { progressHandler.done(); return data.functions; });
+		return result.then((data) => { progressHandler.cleanup(); return data.functions; });
 	}
 
 	public async expandCallTreeNode(documentId: number, processKey: number, nodeId: number): Promise<protocol.CallTreeNode[]> {
@@ -488,7 +492,7 @@ export class Client {
 		},
 			progressHandler.cancellationToken);
 
-		return result.then((data) => { progressHandler.done(); return data.children; });
+		return result.then((data) => { progressHandler.cleanup(); return data.children; });
 	}
 
 
@@ -509,7 +513,7 @@ export class Client {
 		},
 			progressHandler.cancellationToken);
 
-		return result.then((data) => { progressHandler.done(); return data; });
+		return result.then((data) => { progressHandler.cleanup(); return data; });
 	}
 
 	public async retrieveSessionInfo(documentId: number): Promise<protocol.SessionInfo> {
@@ -560,6 +564,6 @@ export class Client {
 		},
 			progressHandler.cancellationToken);
 
-		return result.then((data) => { progressHandler.done(); return data; });
+		return result.then((data) => { progressHandler.cleanup(); return data; });
 	}
 }
