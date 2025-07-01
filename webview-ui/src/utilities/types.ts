@@ -6,12 +6,31 @@ export interface TimeSpan {
     end: number;
 }
 
+export interface PmcCounterInfo {
+    count: number;
+
+    name?: string;
+}
+
+export interface ThreadStatistics {
+    contextSwitches?: number;
+
+    pmcCounters?: PmcCounterInfo[];
+}
+
+export interface ProcessStatistics {
+    contextSwitches?: number;
+
+    pmcCounters?: PmcCounterInfo[];
+}
+
 export interface ThreadInfo {
     key: number;
     osId: number;
     name: string;
     startTime: number;
     endTime: number;
+    statistics: ThreadStatistics;
 }
 
 export interface ProcessInfo {
@@ -21,6 +40,7 @@ export interface ProcessInfo {
     startTime: number;
     endTime: number;
     threads: ThreadInfo[];
+    statistics: ProcessStatistics;
 }
 
 export interface HitCounts {
@@ -45,6 +65,24 @@ export interface SampleSourceInfo {
     numberOfSamples: number;
     averageSamplingRate: number;
     hasStacks: boolean;
+}
+
+export interface SampleCountInfo{
+    sourceId: number;
+
+    numberOfSamples: number;
+}
+
+export interface ThreadSampleInfo{
+    key: number;
+
+    counts: SampleCountInfo[];
+}
+
+export interface ProcessSampleInfo{
+    counts: SampleCountInfo[];
+
+    threads: ThreadSampleInfo[];
 }
 
 export interface CallTreeNode {
@@ -83,4 +121,10 @@ export interface ProcessFunctions {
 export interface InfoEntry {
     key: string;
     value: string;
+}
+
+export interface ExpansionState {
+    expanded: boolean | null;
+
+    children: Map<number, ExpansionState>
 }

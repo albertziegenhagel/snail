@@ -150,6 +150,21 @@ export class PerformanceSessionEditorProvider implements vscode.CustomReadonlyEd
                                 vscode.window.showErrorMessage(`Failed to retrieve hottest functions: ${reason}`);
                             });
                         return;
+                    case "retrieveProcessSampleInfo":
+                        client.retrieveProcessSampleInfo(document.documentId, message.sourceId, message.processKey).then(
+                            (info) => {
+                                webview.postMessage({
+                                    "type": "processSampleInfo",
+                                    "data": {
+                                        "processKey": message.processKey,
+                                        "info": info
+                                    }
+                                });
+                            },
+                            (reason) => {
+                                vscode.window.showErrorMessage(`Failed to retrieve process sample info: ${reason}`);
+                            });
+                        return;
                     case "retrieveCallTreeHotPath":
                         client.retrieveCallTreeHotPath(document.documentId, message.sourceId, message.processKey).then(
                             (root) => {

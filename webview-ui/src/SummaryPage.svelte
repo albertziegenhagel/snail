@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { SvelteMap } from 'svelte/reactivity';
+
   import Pane from "./components/Pane.svelte";
   import FunctionTable from "./components/FunctionTable.svelte";
   import FunctionTableRow from "./components/FunctionTableRow.svelte";
@@ -12,10 +14,12 @@
     TimeSpan,
     SampleSourceInfo,
     InfoEntry,
+    ProcessSampleInfo,
   } from "./utilities/types";
 
   interface Props {
     processes?: ProcessInfo[] | null;
+    processSampleInfos: SvelteMap<number, ProcessSampleInfo | null> | null;
     totalTime?: TimeSpan | null;
     sampleSources: SampleSourceInfo[];
     sessionInfo?: InfoEntry[] | null;
@@ -34,6 +38,7 @@
 
   let {
     processes = null,
+    processSampleInfos = null,
     totalTime = null,
     sampleSources,
     sessionInfo = null,
@@ -141,6 +146,8 @@
       bind:selection={activeSelection}
       {displayTime}
       {processes}
+      {processSampleInfos}
+      {sampleSources}
       {activeSelectionFilter}
       bind:uncheckedProcesses={excludedProcesses}
       bind:uncheckedThreads={excludedThreads}

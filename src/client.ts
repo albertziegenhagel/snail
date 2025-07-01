@@ -435,6 +435,20 @@ export class Client {
 		return result.then((data) => { progressHandler.cleanup(); return data.functions; });
 	}
 
+	public async retrieveProcessSampleInfo(documentId: number, sourceId: number, processKey: number): Promise<protocol.RetrieveProcessSampleInfoResult> {
+		await this._started;
+		if (this._connection === undefined) {
+			return Promise.reject<protocol.RetrieveProcessSampleInfoResult>("Client is not connected");
+		}
+
+		const result = this._connection.sendRequest(protocol.retrieveProcessSampleInfoRequestType, {
+			documentId: documentId,
+			processKey: processKey
+		});
+
+		return result;
+	}
+
 	public async retrieveCallTreeHotPath(documentId: number, sourceId: number, processKey: number): Promise<protocol.CallTreeNode> {
 		await this._started;
 		if (this._connection === undefined) {
