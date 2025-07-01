@@ -3,6 +3,7 @@
     ProcessInfo,
     FunctionId,
     SampleSourceInfo,
+    ProcessSampleInfo,
   } from "./utilities/types";
 
   import FunctionTable from "./components/FunctionTable.svelte";
@@ -10,10 +11,12 @@
   import FunctionTableProcessNode from "./components/FunctionTableProcessNode.svelte";
   import type { VscodeScrollable } from "@vscode-elements/elements";
   import { onMount } from "svelte";
+  import type { SvelteMap } from "svelte/reactivity";
 
   interface Props {
     sampleSources: SampleSourceInfo[];
     processes: ProcessInfo[] | null;
+    processSampleInfos: SvelteMap<number, ProcessSampleInfo | null> | null;
     activeFunction?: FunctionId | null;
     navigate: (functionId: FunctionId) => void;
   }
@@ -21,6 +24,7 @@
   let {
     sampleSources,
     processes,
+    processSampleInfos = null,
     activeFunction = null,
     navigate,
   }: Props = $props();
@@ -97,9 +101,11 @@
   >
     {#if processes !== null}
       {#each processes as process}
+        {@const processSampleInfo = processSampleInfos?.get(process.key)}
         <FunctionTableProcessNode
           navigate={(functionId) => navigate(functionId)}
           {process}
+          {processSampleInfo}
           {sampleSources}
           {activeFunction}
           {sortBy}

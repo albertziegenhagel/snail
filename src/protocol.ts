@@ -38,6 +38,36 @@ export interface SampleSourceInfo {
     hasStacks: boolean;
 }
 
+export interface PmcCounterInfo {
+    count: number;
+
+    name?: string;
+}
+
+export interface SampleCountInfo {
+    sourceId: number;
+
+    numberOfSamples: number;
+}
+
+export interface ThreadSampleInfo {
+    key: number;
+
+    counts: SampleCountInfo[];
+}
+
+export interface ThreadStatistics {
+    contextSwitches?: number;
+
+    pmcCounters?: PmcCounterInfo[];
+}
+
+export interface ProcessStatistics {
+    contextSwitches?: number;
+
+    pmcCounters?: PmcCounterInfo[];
+}
+
 export interface ThreadInfo {
     key: number;
 
@@ -48,6 +78,8 @@ export interface ThreadInfo {
 
     // Time when the thread ended (in nanoseconds since the session start).
     endTime: number;
+
+    statistics: ThreadStatistics;
 
     name?: string;
 }
@@ -66,6 +98,8 @@ export interface ProcessInfo {
     endTime: number;
 
     threads: ThreadInfo[];
+
+    statistics: ProcessStatistics;
 }
 
 export interface SessionInfo {
@@ -256,6 +290,20 @@ export interface RetrieveHottestFunctionsResult {
     functions: ProcessFunction[];
 }
 
+export interface RetrieveProcessSampleInfoParams {
+    processKey: number;
+
+    // The id of the document to perform the operation on.
+    // This should be an id that resulted from a call to `readDocument`.
+    documentId: number;
+}
+
+export interface RetrieveProcessSampleInfoResult {
+    counts: SampleCountInfo[];
+
+    threads: ThreadSampleInfo[];
+}
+
 export interface RetrieveCallTreeHotPathParams extends WorkDoneProgressParams {
     sourceId: number;
 
@@ -427,6 +475,9 @@ export const retrieveProcessesRequestType = new rpc.RequestType<RetrieveProcesse
 
 
 export const retrieveHottestFunctionsRequestType = new rpc.RequestType<RetrieveHottestFunctionsParams, RetrieveHottestFunctionsResult, void>('retrieveHottestFunctions');
+
+
+export const retrieveProcessSampleInfoRequestType = new rpc.RequestType<RetrieveProcessSampleInfoParams, RetrieveProcessSampleInfoResult, void>('retrieveProcessSampleInfo');
 
 
 export const retrieveCallTreeHotPathRequestType = new rpc.RequestType<RetrieveCallTreeHotPathParams, RetrieveCallTreeHotPathResult, void>('retrieveCallTreeHotPath');

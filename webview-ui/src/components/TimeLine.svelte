@@ -1,10 +1,21 @@
 <script lang="ts">
-  import type { TimeSpan, ProcessInfo } from "../utilities/types";
+  import { SvelteMap } from 'svelte/reactivity';
+
+  import type {
+    TimeSpan,
+    ProcessInfo, 
+    ThreadInfo,
+    ProcessSampleInfo,
+    ThreadSampleInfo,
+    SampleSourceInfo,
+  } from "../utilities/types";
   import Checkbox from "./Checkbox.svelte";
 
   interface Props {
     displayTime: TimeSpan | null;
     processes: ProcessInfo[] | null;
+    processSampleInfos: SvelteMap<number, ProcessSampleInfo | null> | null;
+    sampleSources: SampleSourceInfo[];
     activeSelectionFilter: TimeSpan | null;
     selection: TimeSpan | null;
     uncheckedProcesses: number[];
@@ -15,6 +26,8 @@
   let {
     displayTime = null,
     processes = null,
+    processSampleInfos = null,
+    sampleSources,
     activeSelectionFilter = null,
     selection = $bindable(null),
     uncheckedProcesses = $bindable([]),
@@ -178,6 +191,39 @@
 
     select?.(selection);
   }
+
+  function makeTitle(info : ProcessInfo|ThreadInfo,
+                     sampleInfo : ProcessSampleInfo|ThreadSampleInfo|undefined|null,
+                     isProcess : boolean) {
+
+    const header = isProcess ? `${info.name} (PID ${info.osId})` : 
+                               ((info.name === null ? "[thread]" : info.name) + `(TID ${info.osId})`);
+
+    let statistics : string = "";
+    if(info.statistics.contextSwitches !== undefined) {
+      statistics += `\nContext Switches: ${info.statistics.contextSwitches}`
+    }
+    if(info.statistics.pmcCounters !== undefined) {
+      for (const [index, counter] of info.statistics.pmcCounters.entries()) {
+        const name = counter.name !== undefined ? counter.name : `counter ${index}`;
+        statistics += `\nPMC ${name}: ${counter.count}`
+      }
+    }
+
+    if(sampleInfo !== undefined && sampleInfo !== null) {
+      for (const [index, info] of sampleInfo.counts.entries()) {
+        statistics += `\nSamples ${sampleSources[index].name}: ${info.numberOfSamples}`
+      }
+    }
+
+    let result = header;
+    if(statistics.length > 0) {
+      result += ":";
+      result += statistics;
+    }
+
+    return result
+  }
 </script>
 
 <svelte:window onmousemove={moveSelect} onmouseup={endSelect} />
@@ -274,6 +320,7 @@
   <tbody>
     {#if displayTime !== null && processes !== null && checked !== null && expanded !== null}
       {#each processes as process, processIndex}
+        {@const processSampleInfo = processSampleInfos?.get(process.key)}
         <tr class:disabled={!checked[processIndex].process}>
           <td class="name-data">
             <div>
@@ -292,7 +339,9 @@
                   bind:checked={checked[processIndex].process}
                   onchange={() => toggleProcessFilter(processIndex)}
                 ></Checkbox>
-                {process.name} (PID: {process.osId})
+                <div title={makeTitle(process, processSampleInfo, true)}>
+                  {process.name} (PID: {process.osId})
+                </div>
               </div>
             </div>
           </td>
@@ -404,7 +453,9 @@
                       onchange={() =>
                         toggleThreadFilter(processIndex, threadIndex)}
                     ></Checkbox>
-                    {thread.name === null ? "[thread]" : thread.name} (TID: {thread.osId})
+                    <div title={makeTitle(thread, processSampleInfo?.threads[threadIndex], false)}>
+                      {thread.name === null ? "[thread]" : thread.name} (TID: {thread.osId})
+                    </div>
                   </div>
                 </div>
               </td>

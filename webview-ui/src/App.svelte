@@ -13,10 +13,11 @@
     ProcessFunction,
     SampleSourceInfo,
     InfoEntry,
+    ProcessSampleInfo,
   } from "./utilities/types";
 
-  import Summary from "./SummaryPage.svelte";
-  import CallTree from "./CallTreePage.svelte";
+  import SummaryPage from "./SummaryPage.svelte";
+  import CallTreePage from "./CallTreePage.svelte";
   import CallerCallee from "./CallerCallee.svelte";
   import FunctionsPage from "./FunctionsPage.svelte";
 
@@ -35,6 +36,8 @@
   let activeCallerCalleeNode: CallerCalleeNode | null = $state(null);
 
   let callTreeRoots: SvelteMap<number, CallTreeNode | null> | null = $state(null);
+
+  let processSampleInfos: SvelteMap<number, ProcessSampleInfo | null> | null = $state(null);
 
   let hotFunctions: ProcessFunction[] | null = $state(null);
 
@@ -192,6 +195,16 @@
           }
           callTreeRoots.set(process.key, null);
         }
+        if (processSampleInfos === null || !(process.key in processSampleInfos)) {
+          vscode.postMessage({
+            command: "retrieveProcessSampleInfo",
+            processKey: process.key,
+          });
+          if (processSampleInfos === null) {
+            processSampleInfos = new SvelteMap<number, ProcessSampleInfo>();
+          }
+          processSampleInfos.set(process.key, null);
+        }
       }
       if (callTreeRoots !== null) {
         for (let processKey of callTreeRoots.keys()) {
@@ -204,6 +217,20 @@
           }
           if (!hasProcess) {
             callTreeRoots.delete(processKey);
+          }
+        }
+      }
+      if (processSampleInfos !== null) {
+        for (let processKey of processSampleInfos.keys()) {
+          let hasProcess = false;
+          for (const process of processes) {
+            if (process.key === processKey) {
+              hasProcess = true;
+              break;
+            }
+          }
+          if (!hasProcess) {
+            processSampleInfos.delete(processKey);
           }
         }
       }
@@ -224,8 +251,10 @@
       activeFunction = null;
       activeCallerCalleeNode = null;
       callTreeRoots = null;
+      processSampleInfos = null;
       hotFunctions = null;
       callTreeRoots = new SvelteMap<number, CallTreeNode>();
+      processSampleInfos = new SvelteMap<number, ProcessSampleInfo>();
       if (processes !== null) {
         for (const process of processes) {
           vscode.postMessage({
@@ -235,6 +264,10 @@
               activeHotSourceIndex !== null
                 ? sampleSources[activeHotSourceIndex].id
                 : null,
+          });
+          vscode.postMessage({
+            command: "retrieveProcessSampleInfo",
+            processKey: process.key,
           });
         }
       }
@@ -258,6 +291,11 @@
         callers: event.data.data["callers"],
         callees: event.data.data["callees"],
       };
+    }
+
+    if (event.data.type === "processSampleInfo") {
+      if (processSampleInfos === null) return;
+      processSampleInfos.set(event.data.data["processKey"], event.data.data["info"]);
     }
 
     if (event.data.type === "callTreeHotPath") {
@@ -289,7 +327,7 @@
     <vscode-tab-header slot="header" id="functions-tab">Functions</vscode-tab-header>
 
     <vscode-tab-panel id="summary-view">
-      <Summary
+      <SummaryPage
         navigate={(functionId) => changeActiveFunction(functionId)}
         filter={(timeSpan, excludedProcesses, excludedThreads) =>
           applyFilter(
@@ -299,6 +337,7 @@
             excludedThreads,
           )}
         {processes}
+        {processSampleInfos}
         {totalTime}
         {sampleSources}
         {sessionInfo}
@@ -311,7 +350,7 @@
     </vscode-tab-panel>
 
     <vscode-tab-panel id="call-tree-view">
-      <CallTree
+      <CallTreePage
         navigate={(functionId) => changeActiveFunction(functionId)}
         roots={callTreeRoots}
         hotSourceIndex={activeHotSourceIndex}
@@ -335,6 +374,7 @@
         navigate={(functionId) => changeActiveFunction(functionId)}
         {sampleSources}
         {processes}
+        {processSampleInfos}
         {activeFunction}
       />
     </vscode-tab-panel>

@@ -6,6 +6,7 @@
     FunctionNode,
     SampleSourceInfo,
     HitCounts,
+    ProcessSampleInfo,
   } from "../utilities/types";
 
   import FunctionTableRow from "./FunctionTableRow.svelte";
@@ -13,16 +14,18 @@
 
   interface Props {
     process: ProcessInfo;
+    processSampleInfo: ProcessSampleInfo | null | undefined;
     activeFunction: FunctionId | null;
     sampleSources: SampleSourceInfo[];
     sortBy: string | null;
     sortOrder: string | null;
-    sortSourceId: number | undefined;
+    sortSourceId: number | null;
     navigate: (functionId: FunctionId) => void;
   }
 
   let {
     process,
+    processSampleInfo,
     activeFunction,
     sampleSources,
     sortBy,
@@ -59,7 +62,7 @@
       command: "retrieveFunctionsPage",
       sortBy: useSortBy,
       sortOrder: useSortOrder,
-      sortSourceId: sortSourceId,
+      sortSourceId: (sortSourceId === null ? undefined : sortSourceId),
       pageSize: pageSize,
       pageIndex: nextPageIndex,
       processKey: process.key,
@@ -119,7 +122,7 @@
     sortBy;
     sortOrder;
     sortSourceId;
-    if (sortBy !== null || sortOrder !== null || sortSourceId !== undefined) {
+    if (sortBy !== null || sortOrder !== null || sortSourceId !== null) {
       untrack(() => {
         if (expanded) {
           loadMore(true);
@@ -133,13 +136,15 @@
   $effect(() => {
     // rebuild the displayed function object when necessary
     let hits: HitCounts[] = [];
-    for (let source of sampleSources) {
+    for (let [index, source] of sampleSources.entries()) {
+      const countInfo = processSampleInfo?.counts?.at(index);
+      const totalSamples = countInfo?.numberOfSamples !== undefined ? countInfo?.numberOfSamples : 0;
       hits.push({
         sourceId: source.id,
         selfPercent: 0.0,
         selfSamples: 0,
-        totalPercent: 0.0,
-        totalSamples: 0,
+        totalPercent: source.numberOfSamples > 0 ? totalSamples*100 / source.numberOfSamples : 0,
+        totalSamples: totalSamples,
       });
     }
     processPseudoFunc = {
